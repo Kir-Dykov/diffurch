@@ -15,6 +15,7 @@ using namespace boost::numeric;
 #include "save.hpp"
 #include "discosque.hpp"
 #include "dde1.hpp"
+#include "progressbar.hpp"
 
 using namespace std;
 
@@ -62,6 +63,7 @@ void count_fixed_points(double x, double y, int& count_stable, int& count_unstab
 	vector<double> p_(v_n);
 	vector<double> t_return(v_n);
 	vector<double> zero_count(v_n, 0);
+    
 
 	for (int i = 0; i < v_n; i++) {
 		double x = 0;
@@ -126,7 +128,7 @@ void count_fixed_points(double x, double y, int& count_stable, int& count_unstab
 	}
 
 	for (int i = 1; i < v_n; i++) {
-		if ((p_[i-1]-v_[i-1])*(p_[i]-v_[i]) <= 0) {
+		if (p_[i]!=0 && p_[i-1] != 0 && (p_[i-1]-v_[i-1])*(p_[i]-v_[i]) <= 0) {
 				count_stable++;
 			// if (abs((p_[i]-p_[i-1])/(v_[i]-v_[i-1])) < 1) {
 			// 	count_stable++;
@@ -153,7 +155,11 @@ int main(int argc, char* argv[]) {
 	v_start = (double)json_params["v_start"];
 	v_finish = (double)json_params["v_finish"];
 	v_n = (int)json_params["v_n"];
-	v_ = linspace(v_start, v_finish, v_n);
+    
+    if (json_params.contains("expspace") && (bool)json_params["expspace"])
+        v_ = expspace(v_start, v_finish, v_n);
+    else
+        v_ = linspace(v_start, v_finish, v_n);
 
 	if (json_params.contains("b"))   b_global   = (double)json_params["b"];
 	if (json_params.contains("c"))   c_global   = (double)json_params["c"];
@@ -175,6 +181,8 @@ int main(int argc, char* argv[]) {
 
 
 	int size = (int)json_params["size"];
+    
+    ProgressBar progress_bar (size*size);
 
 	vector<vector<int>> count_stable (size, vector<int>(size, 0));
 	vector<vector<int>> count_unstable (size, vector<int>(size, 0));
@@ -192,8 +200,11 @@ int main(int argc, char* argv[]) {
 		threads.push_back(thread( [&, i] {
 			for (int j = 0; j < size; j++) {
 				count_fixed_points(x[i],y[j], count_stable[i][j], count_unstable[i][j]);
+                progress_bar.progress += 1;
+                progress_bar.update();
+                progress_bar.print();
 			}
-			cout << i << "th / " << size << " is done" << endl; 
+			// cout << i << "th / " << size << " is done" << endl; 
 		}));
 	}
 
@@ -205,8 +216,11 @@ int main(int argc, char* argv[]) {
 	int seconds = chrono::duration_cast<chrono::seconds>(end - begin).count();
 	cout << "~~~ Computation took " << (seconds / 3600) << ":" << (seconds / 60) % 60 << ":" << seconds % 60 << " (hh:mm:ss) ~~~" << endl;
 
-	// vector<vector<double>> output {v_, p_, t_return, zero_count};
+	vector<vector<vector<int>>> output {count_stable, count_unstable};
 	
-	save(count_stable, "output_bin/" + output_prefix + " " + params + ".bin");
+    string filename = output_prefix + " " + params;
+    filename.erase(200, string::npos);
+
+	save(output, "output_bin/" + filename + ".bin");
 	// save(output, "solution.bin");
 }

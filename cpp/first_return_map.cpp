@@ -42,7 +42,14 @@ int main(int argc, char* argv[]) {
 	t_finish = (double)json_params["t_finish"];
 	h = (double)json_params["h"];
 
-	vector<double> v_ = linspace(v_start, v_finish, v_n);
+	vector<double> v_;
+    
+    if (json_params.contains("expspace") && (bool)json_params["expspace"])
+        v_ = expspace(v_start, v_finish, v_n);
+    else
+        v_ = linspace(v_start, v_finish, v_n);
+    
+    
 	vector<double> p_(v_n);
 	vector<double> t_return(v_n);
 	vector<double> zero_count(v_n, 0);
@@ -121,8 +128,12 @@ int main(int argc, char* argv[]) {
 				// cout << "zero at " <<	t0 << endl;
 
 				if (t0 - prev_t0 > tau) {
+                    
 					// cout << t0 << "    "<< h0 << "   " << x0 << "  " << dx0 << endl;
 					p_[i] = abs(dx0);
+                    if (isnan(p_[i])) {
+                        
+                    }
 					t_return[i] = t0;
 					break;
 				}
@@ -149,6 +160,9 @@ int main(int argc, char* argv[]) {
 
 	vector<vector<double>> output {v_, p_, t_return, zero_count};
 	
-	save(output, "output_bin/" + output_prefix + " " + params + ".bin");
+	string filename = output_prefix + " " + params;
+    filename.erase(200, string::npos);
+
+	save(output, "output_bin/" + filename + ".bin");
 	// save(output, "solution.bin");
 }

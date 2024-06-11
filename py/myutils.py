@@ -41,8 +41,15 @@ def filename_from_params(params):
 def run_cpp(filename, params = "{}", output_prefix = None, recompile=True):
     if output_prefix is None:
         output_prefix = filename
+    
+    if not os.path.isdir("output_bin"):
+        os.system( "mkdir output_bin")
+    if not os.path.isdir("output_img"):
+        os.system( "mkdir output_img")
 
     if recompile or not os.path.isfile(f"cpp_compiled/{filename}.o"):
+        if not os.path.isdir("cpp_compiled"):
+            os.system("mkdir cpp_compiled")
         cpp_compile_command = f"g++ -std=c++20 -Wfatal-errors -w cpp/{filename}.cpp -o cpp_compiled/{filename}.o"
         exit_code = os.system(cpp_compile_command)
         if exit_code == 0: 

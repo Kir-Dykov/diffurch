@@ -5,6 +5,10 @@ cpp_compiled/*
 #py cache
 *.pyc
 
+
+*/.ipynb_checkpoints/*
+.ipynb_checkpoints/*
+
 # Prerequisites
 *.d
 

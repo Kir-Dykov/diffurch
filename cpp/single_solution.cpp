@@ -12,6 +12,8 @@ using namespace boost::numeric;
 
 #include "utils.hpp"
 #include "save.hpp"
+#include "discosque.hpp"
+#include "dde1.hpp"
 
 using namespace std;
 
@@ -124,10 +126,6 @@ int main(int argc, char* argv[]) {
 	// interval<double>dx = v;
 	// interval<double> t = 0;
 
-	double x = 0.000000000001 * v;
-	double dx = v;
-	double t = 0;
-
 	vector<double> x_;
 	vector<double> dx_;
 	vector<double> t_;
@@ -136,65 +134,94 @@ int main(int argc, char* argv[]) {
 	// vector<interval<double>> dx_;
 	// vector<interval<double>> t_;
 
-		 x_.push_back(-dx*h);
-		dx_.push_back(dx);
-		 t_.push_back(-h);
+		//  x_.push_back(-dx*h);
+		// dx_.push_back(dx);
+		//  t_.push_back(-h);
 
-		 x_.push_back(x);
+		
+
+
+	// const int disco_order = 0;
+	// vector<int> i_tau(disco_order+1, 0);
+	// vector<int> prev_i_tau(disco_order+1, 0);
+
+
+	DDE1 dde;
+		dde.b = b; dde.c = c; 
+		dde.d = d; dde.tau = tau;
+		dde.h = h; dde.t_finish = t_finish;
+
+
+		double x = 0;
+		double dx = v;
+		double t = 0;
+    
+         x_.push_back(x);
 		dx_.push_back(dx);
 		 t_.push_back(t);
 
+		double x_tau = -dx;
 
-	const int disco_order = 0;
-	vector<int> i_tau(disco_order+1, 0);
-	vector<int> prev_i_tau(disco_order+1, 0);
+		DiscosQue discos(tau, 6);
 
+		// int t_retarded_i = 0;
+		double prev_t0 = 0;
+		bool sign_switch_flag = false;
 
-	while (t < t_finish) {
+		while (t < t_finish) {
+			double prev_x = x;
+			double prev_dx = dx;
+			double prev_t = t;
+			// double x_tau;
 
-		double prev_x = x;
-		double prev_dx = dx;
-		double prev_t = t;
-		double x_tau;
+			t += h;
 
-		t += h;
-
-		for (int ii = 0; ii <= disco_order; ii++) {
-			prev_i_tau[ii] = i_tau[ii];
-			while (t_[i_tau[ii] + 1] < (t -(ii+1)*tau)) {
-				i_tau[ii]++;
+			if (sign_switch_flag) {
+				x_tau = -x_tau;
+				sign_switch_flag = false;
 			}
-		}
-		x_tau = x_[i_tau[0]];	
 
-		for (int ii = 0; ii < disco_order; ii++) {
-			// break;
-			if (x_[i_tau[ii]] * x_[prev_i_tau[ii]] <= 0) {
-				// cout << ii << " opa " << endl;
-				double x0 = x_[prev_i_tau[ii]];
-				double dx0=dx_[prev_i_tau[ii]];
-				double h0 = 0 - x0/dx0;
-				double x1,dx1;
+			// while (t_[t_retarded_i] < t - tau) t_retarded_i++;
 
+			if (t >= discos.top) {
+					// cout << discos.top << endl;
+				t = discos.top;
+				if (discos.top_order == 0) { sign_switch_flag = true; }
+				discos.pop();
+				// while (t_[t_retarded_i] >= t-tau) t_retarded_i--;
+			}
+
+			// x_tau = x_[t_retarded_i];
+
+			dde.step(x, dx, x_tau, t - prev_t, x, dx);
+
+			if (x*prev_x <= 0. && x != 0.) {
+				
+				double x0 = x, dx0 = dx;
+				double h0 = (t - prev_t) - x0/dx0;
 				for (int newton_i = 0; newton_i < 20; newton_i++) {
-					DOPRI5step(x0, dx0, x_[prev_i_tau[ii+1]], h0, x1, dx1);
-					h0 -= x1/dx1;
+					dde.step(prev_x, prev_dx, x_tau, h0, x0, dx0);
+					h0 -= x0/dx0;
 				}
-				t = t_[prev_i_tau[ii]] + h0 + (ii+1) * tau;
-				x_tau = x_[prev_i_tau[ii]];	
-				cout << t_[prev_i_tau[ii]] << "	" << h0 << "   " << x1 << "  " << dx1 << " " << t << endl;
-				break;
-			}
-		}
-		DOPRI5step(x, dx, x_tau, t - prev_t, x, dx);
+				double t0 = prev_t + h0;
 
-		x_.push_back(x);
-		dx_.push_back(dx);
-		t_.push_back(t);
-	}
+				discos.push(t0);
+				// cout << discos.top << " " << discos.top_order << endl;
+				prev_t0 = t0;
+			}
+
+			x_.push_back(x);
+			dx_.push_back(dx);
+			t_.push_back(t);
+		} 
 
 	vector<vector<double>> output {x_, dx_, t_};
+    
+    string filename = output_prefix + " " + params;
+    filename.erase(200, string::npos);
 
-	save(output, "output_bin/" + output_prefix + " " + params + ".bin");
+	save(output, "output_bin/" + filename + ".bin");
+    
+    cout << 
 	// save(output, "solution.bin");
 }
