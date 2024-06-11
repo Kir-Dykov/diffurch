@@ -58,83 +58,59 @@ void count_fixed_points(double x, double y, int& count_stable, int& count_unstab
 	dde.t_finish = t_finish;
 
 	set_params(x, y, dde.b, dde.c, dde.d, dde.tau);
-
-
+    
 	vector<double> p_(v_n);
 	vector<double> t_return(v_n);
 	vector<double> zero_count(v_n, 0);
     
 
 	for (int i = 0; i < v_n; i++) {
-		double x = 0;
-		double dx = v_[i];
-		double t = 0;
-
-		double x_tau = -dx;
-
-		DiscosQue discos(dde.tau, 6);
-
-		double prev_t0 = 0;
-		bool sign_switch_flag = false;
-
-		while (t < t_finish) {
-			double prev_x = x;
-			double prev_dx = dx;
-			double prev_t = t;
-
-			t += h;
-
-
-			if (sign_switch_flag) {
-				x_tau = -x_tau;
-				sign_switch_flag = false;
-			}
-
-
-			if (t >= discos.top) {
-				t = discos.top;
-				if (discos.top_order == 0) { sign_switch_flag = true; }
-				discos.pop();
-			}
-
-			dde.step(x, dx, x_tau, t - prev_t, x, dx);
-
-			if (x*prev_x <= 0. && x != 0.) {
-				
-				zero_count[i]++;
-				double x0 = x, dx0 = dx;
-				double h0 = (t - prev_t) - x0/dx0;
-				for (int newton_i = 0; newton_i < 20; newton_i++) {
-					dde.step(prev_x, prev_dx, x_tau, h0, x0, dx0);
-					h0 -= x0/dx0;
-				}
-				double t0 = prev_t + h0;
-				
-				if (t0 - prev_t0 > dde.tau) {
-					p_[i] = abs(dx0);
-					t_return[i] = t0;
-					break;
-				}
-
-				discos.push(t0);
-				prev_t0 = t0;
-			}
-		} 
-
-		if (t >= t_finish) {
-			p_[i] = 0;
-			t_return[i] = 0;
-		} 
+		dde.first_return_map(v_[i], p_[i], t_return[i], zero_count[i]);
+        // if (t_return[i] > 0.5 * dde.t_finish) {
+        //     dde.t_finish *= 2.;
+        // }
 	}
 
 	for (int i = 1; i < v_n; i++) {
-		if (p_[i]!=0 && p_[i-1] != 0 && (p_[i-1]-v_[i-1])*(p_[i]-v_[i]) <= 0) {
-				count_stable++;
-			// if (abs((p_[i]-p_[i-1])/(v_[i]-v_[i-1])) < 1) {
-			// 	count_stable++;
-			// } else {
-			// 	count_unstable++;
-			// }
+		if (!isnan(p_[i]) && !isnan(p_[i-1]) && (p_[i-1]-v_[i-1])*(p_[i]-v_[i]) <= 0) {
+			double left_sign = (p_[i-1]-v_[i-1]);
+            
+            double l_v = v_[i-1];
+            double r_v = v_[i];
+            
+            double l_p = p_[i-1];
+            double r_p = p_[i];
+            
+            double _;
+            
+            for (int bs_i = 0; bs_i < 50; bs_i++) {
+                double m_v = (l_v+r_v)*0.5;
+                double m_p;
+                dde.first_return_map(m_v, m_p, _, _);
+                if (left_sign*(m_p - m_v) > 0) {
+                    l_v = m_v;
+                    l_p = m_p;
+                } else {
+                    r_v = m_v;
+                    r_p = m_p;
+                }
+            }
+            
+            if  (abs(l_p - l_v) > 0.001) {
+                // we regard this as discontinuity
+            } else {
+                // we regard this as fixed point
+                
+                // derivative approximation
+                r_v = l_v*1.00001;
+                dde.first_return_map(r_v, r_p, _, _);
+                if (abs(r_p - l_p) > abs(r_v - l_v)) {
+                    count_unstable++;
+                } else {
+                    count_stable++;
+                }
+                
+            }
 		}
 
 	}
@@ -156,8 +132,9 @@ int main(int argc, char* argv[]) {
 	v_finish = (double)json_params["v_finish"];
 	v_n = (int)json_params["v_n"];
     
-    if (json_params.contains("expspace") && (bool)json_params["expspace"])
+    if (json_params.contains("expspace") && (bool)json_params["expspace"]) {
         v_ = expspace(v_start, v_finish, v_n);
+    }
     else
         v_ = linspace(v_start, v_finish, v_n);
 
@@ -182,7 +159,7 @@ int main(int argc, char* argv[]) {
 
 	int size = (int)json_params["size"];
     
-    ProgressBar progress_bar (size*size);
+    
 
 	vector<vector<int>> count_stable (size, vector<int>(size, 0));
 	vector<vector<int>> count_unstable (size, vector<int>(size, 0));
@@ -196,10 +173,13 @@ int main(int argc, char* argv[]) {
 
 	vector<thread> threads;
 
+    
+    ProgressBar progress_bar (size*size);
+    
 	for (int i = 0; i < size; i++) {
 		threads.push_back(thread( [&, i] {
 			for (int j = 0; j < size; j++) {
-				count_fixed_points(x[i],y[j], count_stable[i][j], count_unstable[i][j]);
+				count_fixed_points(x[j],y[i], count_stable[i][j], count_unstable[i][j]);
                 progress_bar.progress += 1;
                 progress_bar.update();
                 progress_bar.print();

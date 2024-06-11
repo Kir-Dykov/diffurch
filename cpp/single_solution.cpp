@@ -222,6 +222,5 @@ int main(int argc, char* argv[]) {
 
 	save(output, "output_bin/" + filename + ".bin");
     
-    cout << 
 	// save(output, "solution.bin");
 }

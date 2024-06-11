@@ -1,9 +1,24 @@
 #pragma once
 
+#include "discosque.hpp"
+#include <math.h>
+#include <limits>
+
+#define sNAN std::numeric_limits<double>::signaling_NaN()
+
+
+using namespace std;
+// const double Nan = numeric_limits<double>::quiet_NaN();
+
+
 class DDE1 {
 public:
-	double b,c,d,tau;
-	double h, t_finish;
+	double b=sNAN;
+    double c=sNAN;
+    double d=sNAN;
+    double tau=sNAN;
+	double h=sNAN;
+    double t_finish=sNAN;
 
 	inline void eval_f(const double& x, const double& dx, const double& s, double& to_x, double& to_dx ){
 		to_dx = -b * dx - c * x + d * s;
@@ -70,4 +85,90 @@ public:
 	void step(double x, double dx, double x_tau, double h, double & xNext, double & dxNext) {
 		return DOPRI5step(x,dx,x_tau,h,xNext,dxNext);
 	}
+    
+    void first_return_map(double v, double& p, double&t_return, double& zero_count) {
+        zero_count = 0;
+        
+        double x = 0;
+        double dx = v;
+        double t = 0;
+        
+        double x_tau = -dx;
+
+		DiscosQue discos(tau, 6);
+
+		double prev_t0 = 0;
+		bool sign_switch_flag = false;
+        
+        while (t < t_finish) {
+			double prev_x = x;
+			double prev_dx = dx;
+			double prev_t = t;
+
+			t += h;
+
+			if (sign_switch_flag) {
+				x_tau = -x_tau;
+				sign_switch_flag = false;
+			}
+
+			if (t >= discos.top) {
+				t = discos.top;
+				if (discos.top_order == 0) { sign_switch_flag = true; }
+				discos.pop();
+			}
+
+			step(x, dx, x_tau, t - prev_t, x, dx);
+
+			if (x*prev_x <= 0. && x != 0.) {
+				
+				zero_count++;
+				double x0 = x, dx0 = dx;
+				double h0 = (t - prev_t);
+                
+                if (10* abs(x0) < abs(dx0)) { // if x0 is small and derivative is not small
+                    h0 -= x0/dx0;
+                    for (int newton_i = 0; newton_i < 20; newton_i++) {
+                        step(prev_x, prev_dx, x_tau, h0, x0, dx0);
+                        h0 -= x0/dx0;
+				    }
+                } else {
+                    double h_l = 0;
+                    double h_r = t - prev_t;
+                    double h_m, x_m, dx_m;
+                    for (int iii=0; iii < 50; iii++) {
+                        h_m = (h_l+h_r)*0.5;
+                        step(prev_x, prev_dx, x_tau, h_m, x_m, dx_m);
+                        if (x_m*prev_x <= 0) h_r = h_m;
+                        else                 h_l = h_m;
+                    }
+                    h0 = h_m;
+                    x0 = x_m;
+                    dx0 = dx_m;
+                }
+				
+                
+				double t0 = prev_t + h0;
+				
+				if (t0 - prev_t0 > tau) {
+					p = abs(dx0);
+					t_return = t0;
+					break;
+				}
+
+				discos.push(t0);
+				prev_t0 = t0;
+			}
+		} 
+
+		if (t >= t_finish) {
+            zero_count = NAN;
+			p = NAN;
+			t_return = NAN;
+		} 
+    };
+    
+    
+    
+    
 };
