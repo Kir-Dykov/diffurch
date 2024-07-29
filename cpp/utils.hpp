@@ -27,6 +27,6 @@ vector<double> expspace(double lo, double hi, size_t size) {
 	return v;
 }
 
-template <typename TT> int sign(TT val) {
+template <typename TT> TT sign(TT val) {
 	return (TT(0) < val) - (val < TT(0));
 }
