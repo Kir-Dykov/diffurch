@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 class DiscoQue {
 public:
 	double tau = 1;
