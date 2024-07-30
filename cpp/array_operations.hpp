@@ -45,3 +45,11 @@ std::array<T, N> operator*(T lhs, const std::array<T, N>& rhs) {
     }
     return result;
 }
+template <typename T, std::size_t N>
+T operator*(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
+    T result;
+    for (std::size_t i = 0; i < N; ++i) {
+        result += lhs[i] * rhs[i];
+    }
+    return result;
+}

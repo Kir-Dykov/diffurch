@@ -13,7 +13,7 @@ using namespace boost::numeric;
 #include "utils.hpp"
 #include "save.hpp"
 #include "discoque.hpp"
-#include "dde1.hpp"
+// #include "dde1.hpp"
 #include "ddes.hpp"
 
 using namespace std;
@@ -47,25 +47,20 @@ int main(int argc, char* argv[]) {
 	h = (double)json_params["h"];
     
     auto B = [b,c,d](const array<double, n>& X) {return X[0];};
+    auto B_derivative = [b,c,d](const array<double, n>& X) {return array<double, n>{1, 0};};
     auto f0 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] - d};};
     auto f1 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] + d};};
     
-    RelayDDE<n, 1, 0> dde(B, f0, f1, {tau});
+    RelayDDE<n, 1, 0> dde(B, B_derivative, f0, f1, {tau});
     
     array<double, 2> X0 = {3,4};
     
     cout << X0 * 4. << endl;
     
-    // dde.print();
     
-//     {
-//         auto B = [b,c,d](const array<double, n>& X) {return X[0];};
-//         auto f0 =[b,c,d](const array<double, n*2>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] - d};};
-//         auto f1 =[b,c,d](const array<double, n*2>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] + d};};
-//         RelayDDE<n, 1, 1> dde(B, f0, f1, {tau});
-//     // dde.print();
-        
-//     }
+    vector<double> ts;
+    vector<array<double, n>> Xs;
+    dde.solution(X0, ts, Xs);
     
 
     
