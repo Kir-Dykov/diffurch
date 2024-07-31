@@ -36,7 +36,6 @@ int main(int argc, char* argv[]) {
     
     
     
-    const int n = 2;
 
 	b = (double)json_params["b"];
 	c = (double)json_params["c"];
@@ -46,23 +45,38 @@ int main(int argc, char* argv[]) {
 	T = (double)json_params["T"];
 	h = (double)json_params["h"];
     
+    const int n = 2;
+    
     auto B = [b,c,d](const array<double, n>& X) {return X[0];};
     auto B_derivative = [b,c,d](const array<double, n>& X) {return array<double, n>{1, 0};};
     auto f0 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] - d};};
     auto f1 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -b*X[1] - c*X[0] + d};};
-    
     RelayDDE<n, 1, 0> dde(B, B_derivative, f0, f1, {tau});
     
-    array<double, 2> X0 = {3,4};
-    
-    cout << X0 * 4. << endl;
-    
-    
-    vector<double> ts;
-    vector<array<double, n>> Xs;
-    dde.solution(X0, ts, Xs);
+    auto phi            = [b,c,d](double t) {return array<double, n>{0.8*d/c, 0};};
+    auto phi_derivative = [b,c,d](double t) {return array<double, n>{0, 0};};
     
 
     
+    
+    auto ivp = InitialValueProblem<n, 1, 0>(dde, phi, phi_derivative);
+    
+    ivp.solution(h, T);
+    
+  
+    vector<vector<double>> output = vector<vector<double>>(ivp.ts.size(), vector<double>(1 + n));
+    for (int i = 0; i < ivp.ts.size(); i++) {
+        output[i][0] = ivp.ts[i];
+        copy(ivp.Xs[i].begin(), ivp.Xs[i].end(), output[i].begin()+1);
+    }
+    
+    string filename = output_prefix + " " + params;
+    if (filename.size() > 200)
+        filename.erase(200, string::npos);
+
+	save(output, "output_bin/" + filename + ".bin");
+    
 	// save(output, "solution.bin");
+    
+    cout << "~~~ " << __FILE__ << " is finished ~~~" << endl;
 }

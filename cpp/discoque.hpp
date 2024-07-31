@@ -13,7 +13,7 @@ using namespace std;
 // removing all-min value 
 
 // Q[i_delay][i_order]
-template <int delays_number, int order_limit, typename T>
+template <int delays_number, int order_limit, typename T = void>
 class DiscoQue {
 private:
 	array<array<vector<double>, order_limit>, delays_number> Q_t; 
@@ -45,7 +45,7 @@ public:
                     all_min = Q_t[delay_i][order_i][I];
                     all_min_order = order_i;
                     all_min_delay = delay_i;
-                    all_min_data = Q_data[delay_i][order_i][I]
+                    all_min_data = Q_data[delay_i][order_i][I];
                 }
             }
         }      
@@ -77,7 +77,7 @@ public:
 
 
 template <int delays_number, int order_limit>
-class DiscoQue {
+class DiscoQue<delays_number, order_limit, void> {
 private:
 	array<array<vector<double>, order_limit>, delays_number> Q_t; 
 	array<array<         int  , order_limit>, delays_number> Q_fisrt_i; 
@@ -110,7 +110,7 @@ public:
         }      
 	}
 
-	void push(double t, T data) {       
+	void push(double t) {       
         for (int delay_i = 0; delay_i < delays_number; delay_i++) {
             for (int order_i = 0; order_i < order_limit; order_i++) {
                    Q_t[delay_i][order_i].push_back(t + delays[delay_i]*(order_i+1));
@@ -122,6 +122,7 @@ public:
 	}
 
 	void pop() {
+        // NO CHECK IF EMPTY
 		Q_fisrt_i[all_min_delay][all_min_order]++;
 		update_all_min();
 	}
