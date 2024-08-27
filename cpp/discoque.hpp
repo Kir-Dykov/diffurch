@@ -6,20 +6,20 @@ using namespace std;
 
 // also implement additional container
 
-// there is a delays_number*order_limit of queues, 
+// there is a n_tau*order_limit of queues, 
 // in which elements are added strictly in ascending order
 // adding is implemented
 // storing all-min value after each update
 // removing all-min value 
 
 // Q[i_delay][i_order]
-template <int delays_number, int order_limit, typename T = void>
+template <int n_tau, int order_limit, typename T = void>
 class DiscoQue {
 private:
-	array<array<vector<double>, order_limit>, delays_number> Q_t; 
-	array<array<         int  , order_limit>, delays_number> Q_fisrt_i; 
-	array<array<vector<T>,      order_limit>, delays_number> Q_data;
-    array<double, delays_number> delays;
+	array<array<vector<double>, order_limit>, n_tau> Q_t; 
+	array<array<         int  , order_limit>, n_tau> Q_fisrt_i; 
+	array<array<vector<T>,      order_limit>, n_tau> Q_data;
+    array<double, n_tau> delays;
     
     int all_min_delay = -1;
     int all_min_order = -1;
@@ -29,7 +29,7 @@ public:
     const double& min = all_min;
     const double& min_data = all_min_data;
     
-	DiscoQue (array<double, delays_number> delays) : delays(delays) {
+	DiscoQue (array<double, n_tau> delays) : delays(delays) {
         for (auto& row : Q_fisrt_i) { row.fill(0); }
     };
 
@@ -37,7 +37,7 @@ public:
 		all_min = numeric_limits<double>::max();
 		all_min_order = -1;
         all_min_delay = -1;
-        for (int delay_i = 0; delay_i < delays_number; delay_i++) {
+        for (int delay_i = 0; delay_i < n_tau; delay_i++) {
             for (int order_i = 0; order_i < order_limit; order_i++) {
                 int I = Q_fisrt_i[delay_i][order_i];
                 if ( I < Q_t[delay_i][order_i].size() &&
@@ -52,7 +52,7 @@ public:
 	}
 
 	void push(double t, T data) {       
-        for (int delay_i = 0; delay_i < delays_number; delay_i++) {
+        for (int delay_i = 0; delay_i < n_tau; delay_i++) {
             for (int order_i = 0; order_i < order_limit; order_i++) {
                    Q_t[delay_i][order_i].push_back(t + delays[delay_i]*(order_i+1));
                 Q_data[delay_i][order_i].push_back(data);
@@ -76,12 +76,12 @@ public:
 
 
 
-template <int delays_number, int order_limit>
-class DiscoQue<delays_number, order_limit, void> {
+template <int n_tau, int order_limit>
+class DiscoQue<n_tau, order_limit, void> {
 private:
-	array<array<vector<double>, order_limit>, delays_number> Q_t; 
-	array<array<         int  , order_limit>, delays_number> Q_fisrt_i; 
-    array<double, delays_number> delays;
+	array<array<vector<double>, order_limit>, n_tau> Q_t; 
+	array<array<         int  , order_limit>, n_tau> Q_fisrt_i; 
+    array<double, n_tau> delays;
     
     int all_min_delay = -1;
     int all_min_order = -1;
@@ -89,7 +89,7 @@ private:
 public:
     const double& min = all_min;
     
-	DiscoQue (array<double, delays_number> delays) : delays(delays) {
+	DiscoQue (array<double, n_tau> delays) : delays(delays) {
         for (auto& row : Q_fisrt_i) { row.fill(0); }
     };
 
@@ -97,7 +97,7 @@ public:
 		all_min = numeric_limits<double>::max();
 		all_min_order = -1;
         all_min_delay = -1;
-        for (int delay_i = 0; delay_i < delays_number; delay_i++) {
+        for (int delay_i = 0; delay_i < n_tau; delay_i++) {
             for (int order_i = 0; order_i < order_limit; order_i++) {
                 int I = Q_fisrt_i[delay_i][order_i];
                 if ( I < Q_t[delay_i][order_i].size() &&
@@ -111,7 +111,7 @@ public:
 	}
 
 	void push(double t) {       
-        for (int delay_i = 0; delay_i < delays_number; delay_i++) {
+        for (int delay_i = 0; delay_i < n_tau; delay_i++) {
             for (int order_i = 0; order_i < order_limit; order_i++) {
                    Q_t[delay_i][order_i].push_back(t + delays[delay_i]*(order_i+1));
             }

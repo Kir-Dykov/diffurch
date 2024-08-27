@@ -50,7 +50,7 @@ def run_cpp(filename, params = "{}", output_prefix = None, recompile=True, debug
     if recompile or not os.path.isfile(f"cpp_compiled/{filename}.o"):
         if not os.path.isdir("cpp_compiled"):
             os.system("mkdir cpp_compiled")
-        cpp_compile_command = f"g++ {'-g' if debug else ''} -std=c++20 -Wfatal-errors -w cpp/{filename}.cpp -o cpp_compiled/{filename}.o"
+        cpp_compile_command = f"g++ {'-g' if debug else ''} -std=c++20 -Wfatal-errors -O3 -w cpp/{filename}.cpp -o cpp_compiled/{filename}.o"
         exit_code = os.system(cpp_compile_command)
         if exit_code == 0: 
             os.system(f'./cpp_compiled/{filename}.o \'{params}\' \'{output_prefix}\'')
