@@ -1,13 +1,14 @@
-output_bin/*
-output_img/*
+output/*
 cpp_compiled/*
+
+
+docs/*
 
 #py cache
 *.pyc
 
 
-*/.ipynb_checkpoints/*
-.ipynb_checkpoints/*
+*ipynb_checkpoints*
 
 # Prerequisites
 *.d

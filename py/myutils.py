@@ -2,6 +2,13 @@ import json
 import os
 import numpy as np
 
+
+output_path = "../output"
+output_bin_path = "../output/bin"
+cpp_path = "../cpp"
+cpp_compiled_path = "../cpp/cpp_compiled"
+
+
 # expected data format:
 # byte number | meaning
 # 0 | array type: single char
@@ -34,28 +41,34 @@ def get_binary(filename):
         return array
 
     
-def filename_from_params(params):
-    return json.dumps(params).replace('"',"").replace(": ","=")
+# def filename_from_params(params):
+#     return json.dumps(params).replace('"',"").replace(": ","=")
+
+
 
 # no .cpp extention in filename
-def run_cpp(filename, params = "{}", output_prefix = None, recompile=True, debug=False):
-    if output_prefix is None:
-        output_prefix = filename
+def run_cpp(script_name, params_str = "{}", output_filename = None, recompile=True, flags = "-Wfatal-errors -O3"):
+    if output_filename is None:
+        output_filename = script_name + " " + params_str
+        output_filename = output_filename[:min(len(script_name), 200)] # truncate by 200 characters
     
-    if not os.path.isdir("output_bin"):
-        os.system( "mkdir output_bin")
-    if not os.path.isdir("output_img"):
-        os.system( "mkdir output_img")
+    
+    if not os.path.isdir(output_path):
+        os.system(f"mkdir {output_path}")
+    if not os.path.isdir(output_bin_path):
+        os.system(f"mkdir {output_bin_path}")
 
-    if recompile or not os.path.isfile(f"cpp_compiled/{filename}.o"):
-        if not os.path.isdir("cpp_compiled"):
-            os.system("mkdir cpp_compiled")
-        cpp_compile_command = f"g++ {'-g' if debug else ''} -std=c++20 -Wfatal-errors -O3 -w cpp/{filename}.cpp -o cpp_compiled/{filename}.o"
-        exit_code = os.system(cpp_compile_command)
-        if exit_code == 0: 
-            os.system(f'./cpp_compiled/{filename}.o \'{params}\' \'{output_prefix}\'')
+    if recompile or not os.path.isfile(f"{cpp_compiled_path}/{script_name}.o"):
+        if not os.path.isdir(cpp_compiled_path):
+            os.system(f"mkdir {cpp_compiled_path}")
+            
+        cpp_compile_command = f"g++ -std=c++20 {flags} -w {cpp_path}/{script_name}.cpp -o {cpp_compiled_path}/{script_name}.o"
+        compile_status = os.system(cpp_compile_command)
+        
+        if compile_status == 0: 
+            os.system(f'{cpp_compiled_path}/{script_name}.o \'{params_str}\' \'{output_filename}\'')
         else:
-            print(f"ERROR: compiler exited and returned {exit_code}")
+            print(f"ERROR: compiler exited and returned {compile_status}")
     else:
-        os.system(f'./cpp_compiled/{filename}.o \'{params}\' \'{output_prefix}\'')
+        os.system(f'{cpp_compiled_path}/{script_name}.o \'{params_str}\' \'{output_filename}\'')
 

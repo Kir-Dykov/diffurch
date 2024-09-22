@@ -1,7 +1,7 @@
 #pragma once
 
 #include "discoque.hpp"
-#include "array_operations.hpp"
+#include "vec.hpp"
 #include <math.h>
 #include <limits>
 #include "runge_kutta_tables.hpp"
@@ -44,19 +44,78 @@ double eval_polynomial_derivative(double theta, const vector<double>& coefs) {
 
 
 
-template <int n, int n_tau, int m_tau>
-class RelayDD;
+
+
+/*
+
+What I want it to look like:
+
+we define
+tau : either vector or a single double, or, perhaps, some bad value to sign an absence of delays
+
+[f_0, f_1, f_2, ..., f_l]
+[f_0, f_1, f_2, ..., f_l]
+
+b : R^n_tau -> R
+b_derivative
+b_levels = []
+
+ODE:
+    DDE(f, df)
+Smooth DDE:
+    DDE(tau or [tau_i], f, df)
+Non-smooth DDE with one discontinuity function:
+    DDE(tau or [tau_i], [f_i] of size b_n, [df_i] of size b_n, b, b_derivative, b_n)
+Non-smooth DDE with multiple discontinuity functions:
+    here either we have a sum of Heaviside functions or IDK there are too many f's then
+
+
+b : if n_b_levels > 0
+    from definition of b m_tau can be determined
+n_b_levels
+f_i : R^(n(1+m_tau)) -> R^ n
+    from that n and m_tau can be determined
+
+DDE<n>(f, df, [tau]) --- no b
+DDE<n>(f, df)
+*/
+
+
+
+/*
+structure:
+    DDE 
+        contains
+            f,df,b,b',tau
+        uses none
+    IVP
+        inherits
+            DDE
+            RK_Table
+        contains
+            phi,phi',psi_i
+            ts,Ks,Xs,disco,Ws,WKs,LEs -> for each solution it is unique
+        functions:
+            interpolation(t, ts, Xs, Ks), interpolation_derivative(t, ts, Xs, Ks)
+                used both for x and w
+            Z_tau
+
+for each solution Ks, Xs, etc need to be global across functions, separate IVP class exists
+*/
+
+
+
 
 // template <int n, int n_tau, int m_tau>
-// class IVP : public RelayDDE<n, n_tau, m_tau>;
+// class IVP : public DDE<n, n_tau, m_tau>;
 
 // const double Nan = numeric_limits<double>::quiet_NaN();
 
 // n - order of the system
 // delays - number of delays in the system
 // true_delays - number of delays such that delayed argument appears in f0 or f1
-template <int n, int n_tau, int m_tau>
-class RelayDDE {
+template <int n, int n_tau, int m_tau = n_tau, int b_levels = 0>
+class DDE {
 public:
     static const int n_arg_f = n*(1 + m_tau);
     using Func_b = Func<n*n_tau, 1>;
@@ -76,11 +135,11 @@ public:
     // delay values them-selfs
     array<double, n_tau> tau;
      
-    RelayDDE( Func_b b, Func_db b_derivative, Func_f f0, Func_f f1, Func_df df0, Func_df df1, array<double, n_tau> tau) : b(b), b_derivative(b_derivative), f0(f0), f1(f1), df0(df0), df1(df1), tau(tau) {};
+    DDE( Func_b b, Func_db b_derivative, Func_f f0, Func_f f1, Func_df df0, Func_df df1, array<double, n_tau> tau) : b(b), b_derivative(b_derivative), f0(f0), f1(f1), df0(df0), df1(df1), tau(tau) {};
         
-    RelayDDE( Func_b b, Func_db b_derivative, Func_f f0, Func_f f1, Func_df df0, Func_df df1, double tau) : b(b), b_derivative(b_derivative), f0(f0), f1(f1), df0(df0), df1(df1), tau({tau}) {};
+    DDE( Func_b b, Func_db b_derivative, Func_f f0, Func_f f1, Func_df df0, Func_df df1, double tau) : b(b), b_derivative(b_derivative), f0(f0), f1(f1), df0(df0), df1(df1), tau({tau}) {};
         
-    RelayDDE(const RelayDDE<n, n_tau, m_tau>& other) : b(other.b), b_derivative(other.b_derivative), f0(other.f0), f1(other.f1), df0(other.df0), df1(other.df1), tau(other.tau) {
+    DDE(const DDE<n, n_tau, m_tau>& other) : b(other.b), b_derivative(other.b_derivative), f0(other.f0), f1(other.f1), df0(other.df0), df1(other.df1), tau(other.tau) {
         std::cout << "Copy constructor called" << std::endl;
     }
     
@@ -88,16 +147,16 @@ public:
 
 
 template <int n, int n_tau, int m_tau>
-class InitialValueProblem : public RelayDDE<n, n_tau, m_tau>, 
+class InitialValueProblem : public DDE<n, n_tau, m_tau>, 
                             public RK<RK5_4_7FM> {
 public:
-    using RelayDDE<n, n_tau, m_tau>::tau;
-    using RelayDDE<n, n_tau, m_tau>::b;
-    using RelayDDE<n, n_tau, m_tau>::b_derivative;
-    using RelayDDE<n, n_tau, m_tau>::f0;
-    using RelayDDE<n, n_tau, m_tau>::f1;
-    using RelayDDE<n, n_tau, m_tau>::df0;
-    using RelayDDE<n, n_tau, m_tau>::df1;
+    using DDE<n, n_tau, m_tau>::tau;
+    using DDE<n, n_tau, m_tau>::b;
+    using DDE<n, n_tau, m_tau>::b_derivative;
+    using DDE<n, n_tau, m_tau>::f0;
+    using DDE<n, n_tau, m_tau>::f1;
+    using DDE<n, n_tau, m_tau>::df0;
+    using DDE<n, n_tau, m_tau>::df1;
                                 
     static const int n_arg_f = n*(1 + m_tau);
     using Func_b = Func<n*n_tau, 1>;
@@ -141,7 +200,7 @@ public:
                                 
     
     /* Constructor */
-    InitialValueProblem(RelayDDE<n, n_tau, m_tau> dde, Func<1, n> phi, Func<1, n> phi_derivative) : RelayDDE<n, n_tau, m_tau>(dde), phi(phi), phi_derivative(phi_derivative), disco(dde.tau) {
+    InitialValueProblem(DDE<n, n_tau, m_tau> dde, Func<1, n> phi, Func<1, n> phi_derivative) : DDE<n, n_tau, m_tau>(dde), phi(phi), phi_derivative(phi_derivative), disco(dde.tau) {
         if constexpr (n_tau == 1) { max_tau = tau[0]; }
         else {max_tau = *max_element(tau.begin(), tau.end());}
     };
@@ -596,7 +655,7 @@ public:
 };
 
 // template <int n, int n_tau, int m_tau>
-// InitialValueProblem<n, n_tau, m_tau> IVP (RelayDDE<n, n_tau, m_tau>& dde, 
+// InitialValueProblem<n, n_tau, m_tau> IVP (DDE<n, n_tau, m_tau>& dde, 
 //      function<array<double, n>(double)> phi,
 //     function<array<double, n>(double)> phi_derivative) 
 // {

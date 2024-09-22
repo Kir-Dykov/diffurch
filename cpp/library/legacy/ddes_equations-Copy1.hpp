@@ -1,7 +1,17 @@
 #pragma once
 
-#include "ddes.hpp"
+#include "dde.hpp"
 #include "array_operations.hpp"
+
+/* *******************************
+
+This file contains the definitions of some concreate equations.
+This is done in the form of the functions that take parameters 
+that a particular equation contains and returns a DDE object
+that corresponds to the equation with those parameters.
+
+******************************* */
+
 
 
 
@@ -9,7 +19,7 @@
     
 
 // x' + b x = Sign( x_tau )
-RelayDDE<1, 1, 0> Relay1 (double b, double d0, double d1, double tau) {  
+DDE<1, 1, 0> Relay1 (double b, double d0, double d1, double tau) {  
     const int n = 1;
     const int n_tau = 1;
     const int m_tau = 0;
@@ -26,11 +36,11 @@ RelayDDE<1, 1, 0> Relay1 (double b, double d0, double d1, double tau) {
     Func_df df0 =  [b,d0](const double& X, const double& W) {return -b*W;};
     Func_df df1 =  [b,d0](const double& X, const double& W) {return -b*W;};
     
-    return RelayDDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 // // x'' + b x' + c x = d sign( x_tau )
-RelayDDE<2, 1, 0> Relay2 (double b, double c, double d, double tau) {
+DDE<2, 1, 0> Relay2 (double b, double c, double d, double tau) {
     const int n = 2;
     const int n_tau = 1;
     const int m_tau = 0;
@@ -47,12 +57,12 @@ RelayDDE<2, 1, 0> Relay2 (double b, double c, double d, double tau) {
     Func_df df0 = [b,c,d](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return Vec<2>{W[1], -b*W[1] - c*W[0]};};
     Func_df df1 = [b,c,d](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return Vec<2>{W[1], -b*W[1] - c*W[0]};};
     
-    return RelayDDE<2, 1, 0>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<2, 1, 0>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 
 // x' + b x_tau = Sign( x_tau )
-RelayDDE<1, 1, 1> Croissant (double b, double d0, double d1, double tau) {  
+DDE<1, 1, 1> Croissant (double b, double d0, double d1, double tau) {  
     const int n = 1;
     const int n_tau = 1;
     const int m_tau = 1;
@@ -69,11 +79,11 @@ RelayDDE<1, 1, 1> Croissant (double b, double d0, double d1, double tau) {
     Func_df df0 =  [b,d0](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W[1];};
     Func_df df1 =  [b,d0](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W[1];};
     
-    return RelayDDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 // x' + b x_tau = Sign( x_tau )
-RelayDDE<1, 1, 1> MakeyGlass (double b, double d0, double d1, double tau) {  
+DDE<1, 1, 1> MakeyGlass (double b, double d0, double d1, double tau) {  
     const int n = 1;
     const int n_tau = 1;
     const int m_tau = 1;
@@ -90,11 +100,11 @@ RelayDDE<1, 1, 1> MakeyGlass (double b, double d0, double d1, double tau) {
     Func_df df0 =  [b,d0,d1](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W[0] + d0*W[1];};
     Func_df df1 =  [b,d0,d1](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W[0] + d1*W[1];};
     
-    return RelayDDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 // x' + b x_tau = Sign( x_tau )
-RelayDDE<1, 1, 1> MakeyGlassExp (double b, double d0, double d1, double tau) {  
+DDE<1, 1, 1> MakeyGlassExp (double b, double d0, double d1, double tau) {  
     const int n = 1;
     const int n_tau = 1;
     const int m_tau = 1;
@@ -111,11 +121,11 @@ RelayDDE<1, 1, 1> MakeyGlassExp (double b, double d0, double d1, double tau) {
     Func_df df0 =  [b,d0,d1](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return d0*exp(X[1] - X[0])*(W[1]-W[0]);};
     Func_df df1 =  [b,d0,d1](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return d1*exp(X[1] - X[0])*(W[1]-W[0]);};
     
-    return RelayDDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 // // x'' + b x' + c x = d sign( x_tau )
-RelayDDE<2, 1, 0> Relay2damp (double gamma, double b0, double b1,  double c, double tau) {
+DDE<2, 1, 0> Relay2damp (double gamma, double b0, double b1,  double c, double tau) {
     const int n = 2;
     const int n_tau = 1;
     const int m_tau = 0;
@@ -132,11 +142,11 @@ RelayDDE<2, 1, 0> Relay2damp (double gamma, double b0, double b1,  double c, dou
     Func_df df0 = [b0,c](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return Vec<2>{W[1], -b0*W[1] - c*W[0]};};
     Func_df df1 = [b1,c](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return Vec<2>{W[1], -b1*W[1] - c*W[0]};};
     
-    return RelayDDE<2, 1, 0>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<2, 1, 0>(B, B_derivative, f0, f1, df0, df1, tau);
 }
 
 // x' + b x_tau = Sign( x_tau )
-RelayDDE<1, 1, 0> RandomWalk (double b, double d0, double d1, double tau) {  
+DDE<1, 1, 0> RandomWalk (double b, double d0, double d1, double tau) {  
     const int n = 1;
     const int n_tau = 1;
     const int m_tau = 0;
@@ -153,60 +163,60 @@ RelayDDE<1, 1, 0> RandomWalk (double b, double d0, double d1, double tau) {
     Func_df df0 =  [b,d0](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W;};
     Func_df df1 =  [b,d0](const Vec<n_arg_f>& X, const Vec<n_arg_f>& W) {return -b*W;};
     
-    return RelayDDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
+    return DDE<n, n_tau, m_tau>(B, B_derivative, f0, f1, df0, df1, tau);
 }
     
 
 // // x' + eps x = d Sign( sin(x_tau) )
-// RelayDDE<1, 1, 0> RandomWalk (double eps, double d0, double d1, double tau) {
+// DDE<1, 1, 0> RandomWalk (double eps, double d0, double d1, double tau) {
 //     const int n = 1;
 //     auto B = [](const array<double, n>& X) {return sin(X[0]);};
 //     auto B_derivative = [](const array<double, n>& X) {return array<double, n>{cos(X[0])};};
 //     auto f0 =[eps,d0](const array<double, n>& X) {return array<double, n>{ -eps*X[0] + d0};};
 //     auto f1 =[eps,d1](const array<double, n>& X) {return array<double, n>{ -eps*X[0] + d1};};
     
-//     return RelayDDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
+//     return DDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
 // }
 
 // // x' + b x_tau = d Sign( x_tau )
-// RelayDDE<1, 1, 1> Croissant (double b, double d0, double d1, double tau) {
+// DDE<1, 1, 1> Croissant (double b, double d0, double d1, double tau) {
 //     const int n = 1;
 //     auto B = [](const array<double, n>& X) {return X[0];};
 //     auto B_derivative = [](const array<double, n>& X) {return array<double, n>{1};};
 //     auto f0 =[b,d0](const array<double, n*2>& X) {return array<double, n>{ -b*X[1] + d0};};
 //     auto f1 =[b,d1](const array<double, n*2>& X) {return array<double, n>{ -b*X[1] + d1};};
-//     return RelayDDE<n, 1, 1>(B, B_derivative, f0, f1, {tau});
+//     return DDE<n, 1, 1>(B, B_derivative, f0, f1, {tau});
 // }
 
 // // x' + b x = d x_tau H(1-|x_tau|)
-// RelayDDE<1, 1, 1> LimitMakeyGlass (double b, double d, double tau) {
+// DDE<1, 1, 1> LimitMakeyGlass (double b, double d, double tau) {
 //     const int n = 1;
 //     auto B = [](const array<double, n>& X) {return abs(X[0]) - 1;};
 //     auto B_derivative = [](const array<double, n>& X) {return array<double, n>{ sign(X[0] )};};
 //     auto f0 =[b,d](const array<double, n*2>& X) {return array<double, n>{ -b*X[0] + d*X[1]};};
 //     auto f1 =[b](const array<double, n*2>& X) {return array<double, n>{ -b*X[0]};};
-//     return RelayDDE<n, 1, 1>(B, B_derivative, f0, f1, {tau});
+//     return DDE<n, 1, 1>(B, B_derivative, f0, f1, {tau});
 // }
 
 // // 
-// RelayDDE<2, 1, 0> OpenBeak (double nu, double gamma, double d0, double d1, double tau) {
+// DDE<2, 1, 0> OpenBeak (double nu, double gamma, double d0, double d1, double tau) {
 //     const int n = 2;
 //     auto B = [gamma](const array<double, n>& X) {return gamma*gamma*X[0]*X[0] + X[1]*X[1] - 1;};
 //     auto B_derivative = [b,c,d](const array<double, n>& X) {return array<double, n>{2*gamma*gamma*X[0], 2*X[1]};};
 //     auto f0 =[nu,d0,d1](const array<double, n>& X) {return array<double, n>{nu*X[1] + d0*X[0], -nu*X[0] + d0*X[1]};};
 //     auto f1 =[nu,d0,d1](const array<double, n>& X) {return array<double, n>{nu*X[1] + d1*X[0], -nu*X[0] + d1*X[1]};};
-//     return RelayDDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
+//     return DDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
 // }
 
 
 
 // // 
-// RelayDDE<2, 1, 0> DampingControl (double gamma, double d0, double d1, double tau) {
+// DDE<2, 1, 0> DampingControl (double gamma, double d0, double d1, double tau) {
 //     const int n = 2;
     
 //     auto B = [b,c,d](const array<double, n>& X) {return X[1] - gamma;};
 //     auto B_derivative = [b,c,d](const array<double, n>& X) {return array<double, n>{1, 0};};
 //     auto f0 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -d0*X[1] - X[0]};};
 //     auto f1 =[b,c,d](const array<double, n>& X) {return array<double, n>{X[1], -d1*X[1] - X[0]};};
-//     return RelayDDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
+//     return DDE<n, 1, 0>(B, B_derivative, f0, f1, {tau});
 // }

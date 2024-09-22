@@ -23,6 +23,10 @@ class ProgressBar {
         begin = std::chrono::steady_clock::now();
     }
     
+    void increment() {
+        progress++;
+        update();
+    }
     
     void update() {
         double p = double(progress)/double(volume);

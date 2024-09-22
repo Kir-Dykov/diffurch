@@ -5,53 +5,93 @@
 #include <iostream>
 #include <iterator> 
 #include <algorithm>
+#include <chrono>
+#include <tuple>
+#include <thread>
 
-#include "json.hpp"
+#include "library/json.hpp"
 
-#include "array_operations.hpp"
+#include "library/vec.hpp"
+// #include "library/dde.hpp"
+// #include "library/ddes_equations.hpp"
+
+#include "library/types.hpp"
 
 using namespace std;
 
+template<typename T>
+constexpr bool is_default(T x) {
+    return x == T{};
+}
 
-// template<int N, typename Enable = void>
-// struct Vec;
-// template<int N>
-// struct Vec<N, typename std::enable_if<N == 1>::type> {
-//     using Type = double;
-// };
-// template<int N>
-// struct Vec<N, typename std::enable_if<(N > 1)>::type> {
-//     using Type = array<double, N>;
-// };
-// template<int N>
-// struct Vec<N, typename std::enable_if<(N < 1)>::type> {
-//     using Type = void;
-// };
 
-// template <int N, int M>
-// using Func = function<Vec<M>(const Vec<N>&)>;
-// template <int N1, int N2, int M>
-// using Func2 = function<Vec<M>(const Vec<N1>&, const Vec<N2>&)>;
+size_t verbose_square(size_t x) {
+    cout << "Squaring " << x << endl;
+    return x*x;
+}
+
+
+template <size_t degree>
+struct test {
+    
+    template <size_t order = 0>
+    void eval() {
+        static size_t square = verbose_square(order);
+        
+        square += 1000;
+        cout << square << endl;
+    }
+};
+
+template <size_t n>
+struct array_test_class {
+    array<double, n> coefs;
+    
+    array_test_class(array<double, n> coefs) : coefs(coefs) {};
+};
+
+
+
+
+// void thread_lambda() {
+//     auto count_lambda = []() {
+//         static int count = 0;  // Static variable
+//         count++;               // Increment
+//         std::cout << "Thread ID: " << std::this_thread::get_id() << " | Count: " << count << std::endl;
+//     };
+
+//     count_lambda();
+// }
 
 
 int main(int argc, char* argv[]) {
     cout << "~~~ " << __FILE__ << " is executed ~~~" << endl;
-
-    Vec<1> x = 2.;
     
-    cout << x << endl;
     
-    Vec<2> y = {3., 4.};
+    array_test_class qwe {{1., 2., 3.}};
     
-    cout << y << endl;
+    test<1> x;
     
-    Func<1,1> half = [](double x){return .5*x;};
+    x.eval();
+    x.eval<1>();
+    x.eval<2>();
+    x.eval<1>();
     
-    Func<2,1> sum = [](array<double, 2> x){return x[0] + x[1];};
+    test<1> y;
     
-    cout << half(x) << endl;
+    y.eval();
+    y.eval<1>();
     
-    cout << sum(y) << endl;
-    
+    // VecFunc<3> x{};
+    // cout << *x << endl;
+    // cout << (void*)x.target() << endl;
+    // if constexpr (x) {
+    //     cout << "HUA" << endl;
+    // } else {
+    //     cout << "HUI" << endl;
+    // }
     cout << "~~~ " << __FILE__ << " is finished ~~~" << endl;
 }
+
+
+

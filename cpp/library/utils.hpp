@@ -11,6 +11,16 @@
 using namespace std;
 
 
+/**
+ * @brief array of linearly spaced values.
+ * 
+ * Generates a vector<double> of `size` equally spaced values in range from `lo` to `hi`. Works as a function `linspace` from `python`
+ package `numpy`. * 
+ * @param[in] lo lower bound.
+ * @param[in] hi higher bound.
+ * @param[in] size the size of the array.
+ * @return vector<double> of size `size`.
+ */
 vector<double> linspace(double lo, double hi, size_t size) {
 	std::vector<double> v(size);
 	for (size_t i = 0; i < size; i++) {

@@ -16,9 +16,14 @@ template <typename T> void save(vector<T> image, string filename) {
     
     
     ofstream file(filename, ios::binary); // open file to write to
-    file.write((char*)(&(typeid(T).name()[0])), sizeof(char)); // type of array
     
     // cout << "size of T is " << sizeof(T) << endl;
+    if (!file) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+    
+    file.write((char*)(&(typeid(T).name()[0])), sizeof(char)); // type of array
     
     int shape_size = 1;
     int       size1= image.size();
@@ -33,7 +38,13 @@ template <typename T> void save(vector<T> image, string filename) {
 template <typename T> void save(vector<vector<T>> image, string filename) {
     
     ofstream file(filename, ios::binary); // open file to write to
+     if (!file) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+    
     file.write((char*)(&(typeid(T).name()[0])), sizeof(char)); // type of array
+    
     
     
     int shape_size  = 2;
@@ -52,6 +63,11 @@ template <typename T> void save(vector<vector<T>> image, string filename) {
 
 template <typename T> void save(vector<vector<vector<T>>> image, string filename) {
     ofstream file(filename, ios::binary); // open file to write to
+     if (!file) {
+        cout << "Failed to open the file: " << filename << endl;
+        return;
+    }
+    
     file.write((char*)(&(typeid(T).name()[0])), sizeof(char)); // type of array
     
     
