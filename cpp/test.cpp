@@ -9,87 +9,136 @@
 #include <tuple>
 #include <thread>
 
+#include "library/json_unpack.hpp"
 #include "library/json.hpp"
-
+// using json = nlohmann::json;
+#include "library/save.hpp"
 #include "library/vec.hpp"
-// #include "library/dde.hpp"
-// #include "library/ddes_equations.hpp"
 
-#include "library/types.hpp"
+
+// #include <boost/hana.hpp>
+// #include <type_traits>
+// namespace hana = boost::hana;
+
+// #include "equations/ode.hpp"
+// #include "equations/dde.hpp"
 
 using namespace std;
 
-template<typename T>
-constexpr bool is_default(T x) {
-    return x == T{};
-}
+
+// #define DEFAULT "default"
 
 
-size_t verbose_square(size_t x) {
-    cout << "Squaring " << x << endl;
-    return x*x;
-}
+// #include "library/string_consteval.hpp"
+// #include "library/param_names.hpp"
+// #include "library/tuple.hpp"
+
+// #include "library/macros.hpp"
+// template <string_consteval s, typename P>
+// using param_index_v = param_index<s, P>::value;
+
+#include "library/real.hpp"
+
+// #ifndef X
+// #define X alpha
+// #endif
+
+// template <typename T, typename U>
+// struct tuple_concat {};
+
+// template <typename... Args1, typename... Args2>
+// struct tuple_concat<tuple<Args1...>, tuple<Args2...>> {
+//     using type = tuple<Args1..., Args2...>;
+// };
 
 
-template <size_t degree>
-struct test {
+
+// template <typename T, typename U>
+// using tuple_concat_t = tuple_concat<T, U>::type;
+
+
+
+// template <size_t s>
+// struct RK_table {
+//     using A_type = tuple_concat_t< typename RK_table<s-1>::A_type, tuple<array<Real, s-1>> >;
+//     using B_type = array<Real, s>;
+//     using C_type = array<Real, s>;
     
-    template <size_t order = 0>
-    void eval() {
-        static size_t square = verbose_square(order);
-        
-        square += 1000;
-        cout << square << endl;
-    }
-};
+// };
 
-template <size_t n>
-struct array_test_class {
-    array<double, n> coefs;
-    
-    array_test_class(array<double, n> coefs) : coefs(coefs) {};
-};
+// template <>
+// struct RK_table<0> {
+//     using A_type = tuple<>;
+// };
 
 
 
+// struct Euler : RK_table<1> {
+//     A_type A = {{}};
+//     B_type B = {1.};
+//     C_type C = {0.};
+// };
 
-// void thread_lambda() {
-//     auto count_lambda = []() {
-//         static int count = 0;  // Static variable
-//         count++;               // Increment
-//         std::cout << "Thread ID: " << std::this_thread::get_id() << " | Count: " << count << std::endl;
+// struct RK4 : RK_table<4> {
+//     A_type A = 
+//         {{}, 
+//          {1./2.}, 
+//          {0.,     1./2.}, 
+//          {0.,     0.,      1.}
+//         };
+//     B_type B = {1./6., 1./3., 1./3., 1./6.};
+//     C_type C = 
+//     {
+//         0,
+//         1./2.,
+//         1./2.,
+//         1.
 //     };
+// };
 
-//     count_lambda();
-// }
+#include <boost/multiprecision/float128.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+
+#include <quadmath.h>
+
+using namespace boost::multiprecision;
+
+
 
 
 int main(int argc, char* argv[]) {
     cout << "~~~ " << __FILE__ << " is executed ~~~" << endl;
+    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+	json json_params = json::parse(argv[1]);
+	cout << "~~~  parameters: " << argv[1] << " ~~~" << endl;
+	string output_filename = argv[2];
     
     
-    array_test_class qwe {{1., 2., 3.}};
+    // using boost::multiprecision::float128;
     
-    test<1> x;
     
-    x.eval();
-    x.eval<1>();
-    x.eval<2>();
-    x.eval<1>();
+    auto n = 123r;
+    cout << typeid(decltype(n)).name() << endl;
     
-    test<1> y;
+    cout << sizeof(double) << endl;
+    cout << sizeof(Real) << endl;
+//     cout << q1 << endl;
+//     cout << q2 << endl;
+//     cout << q3 << endl;
+
+    // using t = tuple_concat_t<tuple<>, tuple<int>>;
     
-    y.eval();
-    y.eval<1>();
     
-    // VecFunc<3> x{};
-    // cout << *x << endl;
-    // cout << (void*)x.target() << endl;
-    // if constexpr (x) {
-    //     cout << "HUA" << endl;
-    // } else {
-    //     cout << "HUI" << endl;
+    // RK4 rk;
+    // // cout << get<3>(rk.A) << endl;
+    // for (int i = 0; i < 4; i++) {
+    //     cout << get<i>(rk.A) << endl;
     // }
+
+    
+    chrono::steady_clock::time_point end = chrono::steady_clock::now();
+	int seconds = chrono::duration_cast<chrono::seconds>(end - begin).count();
+	cout << "~~~ Computation took " << (seconds / 3600) << ":" << (seconds / 60) % 60 << ":" << seconds % 60 << " (hh:mm:ss) ~~~" << endl;
     cout << "~~~ " << __FILE__ << " is finished ~~~" << endl;
 }
 

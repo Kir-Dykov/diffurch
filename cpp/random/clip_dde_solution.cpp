@@ -6,7 +6,7 @@
 #include <iterator> 
 #include <algorithm>
 
-#include "library/json.hpp"
+#include "library/json_unpack.hpp"
 #include "library/utils.hpp"
 #include "library/save.hpp"
 #include "library/discoque.hpp"
@@ -21,18 +21,6 @@
 using namespace std;
 
 using json = nlohmann::json;
-
-// helper template function
-template <std::size_t args_n,  std::size_t... I>
-auto unpack_json_doubles_sequence(json json_params, std::index_sequence<I...>, array<const char*, args_n>args) {
-    return std::tuple((double)json_params[args[I]]...);
-}
-template <size_t args_n>
-auto unpack_json_doubles(json json_params, array<const char*, args_n> args) {
-    return unpack_json_doubles_sequence(json_params, std::make_index_sequence<args_n>{}, args);
-}
-
-
 
 
 

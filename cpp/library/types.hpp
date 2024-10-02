@@ -6,6 +6,24 @@
 #define TRUE_AUTO_EQ(variable_name, expression) decltype(expression) variable_name = expression
 
 
+template<typename... Args>
+void printTypesAndValues(Args&&... args) {
+    // Fold expression to print types and values
+    ((std::cout << typeid(args).name() << " = " << args << ";   "), ...);
+}
+
+template <auto f, typename... Args>
+auto verbose(Args&&... args) {
+    cout << "call " << typeid(f).name() << " with args ";
+    printTypesAndValues(args...);
+    cout << endl;
+    return f(args...);
+}
+
+//usage :  verbose<f>(a, b, c) in the place of f(a, b, c)
+
+
+
 
 // template <typename T, typename... Args>
 // std::function<T(const Args& ...)> FuncTupleToArgsTransform(std::function<T(std::tuple<Args...>)>& func) {
@@ -183,16 +201,3 @@
 
 
 
-template<typename... Args>
-void printTypesAndValues(Args&&... args) {
-    // Fold expression to print types and values
-    ((std::cout << typeid(args).name() << " = " << args << ";   "), ...);
-}
-
-template <auto f, typename... Args>
-auto verbose(Args&&... args) {
-    cout << "call " << typeid(f).name() << " with args ";
-    printTypesAndValues(args...);
-    cout << endl;
-    return f(args...);
-}

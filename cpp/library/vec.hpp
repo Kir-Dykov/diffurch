@@ -4,134 +4,108 @@
 #include <limits>
 #include <array>
 #include <iostream>
+#include "real.hpp"
 
 using namespace std;
 
 
-// template<size_t N>
-// using Vec = array<double, N>;
-
+/**
+ * @brief Alias for array<Real, N> if N > 1 and Real if N == 1.
+ */
 template<size_t N>
-using Vec = conditional<N == 1, double, array<double, N>>::type;
+using Vec = conditional<N == 1, Real, array<Real, N>>::type;
 
-
-// template <size_t N>
-// using VecScalarFunc = function<double(const Vec<N>&)>;
-
-// template <size_t N>
-// using VecFunc = function<Vec<N>(double)>;
-
-// template <size_t N>
-// using VecFunc = function<Vec<N>(double)>;
-
+/**
+ * @brief Alias for type of function from Vec<N> to Vec<M>.
+   @see Vec
+ */
 template <size_t N, size_t M>
 using VecMap = function<Vec<M>(const Vec<N>&)>;
 
+/**
+ * @brief Alias for type of function from Vec<N1> and Vec<N2> to Vec<M>.
+ This is useful for defining the high-dimensional derivatives for VecMap's.
+   @see Vec
+   @see VecMap
+ */
 template <size_t N1, size_t N2, size_t M>
 using VecMap2 = function<Vec<M>(const Vec<N1>&, const Vec<N2>&)>;
 
 
-// I Want to have Vec<1> === double
-// the only inconvinience I see with it
-// is that if I want to compose a vector argument
-// consisting of many doubles i need to have a copy function with offset:
 
-
-void VecCopy(double from, double& to, size_t i = 0) {
-    to = from;
-}
-
-template <size_t n>
-void VecCopy(double from, array<double, n>& to, size_t i = 0) {
-    to[i] = from;
-}
-
-template <size_t n, size_t m>
-void VecCopy(array<double, n> from, array<double, m> to, size_t i = 0) {
-    copy(from.begin(), from.end(), to.begin() + i);
-}
-
-
-template <size_t n>
-void VecCopy(array<double, n> from, vector<double> to, size_t i = 0) {
-    copy(from.begin(), from.end(), to.begin() + i);
-}
-
-void VecCopy(double from, vector<double>& to, size_t i = 0) {
-    to[i] = from;
-}
-
-// template <size_t n, size_t k = 0>
-// class VecScalarFuncC {
-//     array<VecScalarFunc<n>, k+1> fs;
+/**
+ * @brief Class encapsulating the function from `Vec<n>` to `Vec<m>` as well as `k` it's derivatives.
+ @tparam n The dimension for arguments of function.
+ @tparam m The dimension for values of function.
+ @tparam k The number of derivatives provided for that function.
+ */
+template <size_t n, size_t m, size_t k = 0>
+class VecMapC {
+    using derivative_type = std::conditional_t<(n > 1), VecMap2<n,n,m>, VecMap<n,m> >;
+    VecMap<n, m> f;
+    // if the argument of function is scalar, then, instead of differential operator we just have higher order total derivatives
+    array<derivative_type, k> df;
     
-// public:
-//     VecScalarFuncC(const array<VecScalarFunc<n>, k+1>& fs) : fs(fs) {};
+public:
     
-//     inline double operator()(Vec<n> t) {
-//         return fs[0](t);
-//     }
+    VecMapC () {};
     
-//     const VecFunc<n>& operator[](size_t i) {
-//         return fs[i];
-//     };
-// };
+    template <size_t ZERO = 0, typename = std::enable_if_t<k == 0 && ZERO == 0>>
+    VecMapC(const VecMap<n, m>& f) : f(f) {};
+    
+    VecMapC(const VecMap<n, m>& f, const array<derivative_type, k>& df) : f(f), df(df) {};
+    
+    /**
+     * @brief Evaluate function at the value `x`
+    */
+    inline Vec<m> operator()(const Vec<n>& x) const {
+        return f(x);
+    }
+    
+    
+    /**
+     * @brief Apply function's derivative at the value `x` to a finite displacement 'delta_x'.
+     For the case of `derivative_order == 1' this evaluates to `f'(x) * delta_x`, where f'(x) is a jacobian matrix.
+     For the case of `derivative_order == 2' this evaluates to `delta_x^T * f''(x) * delta_x`, where `f''(x)` is a matrix of second order partial derivatives.
+     @tparam derivative_order The order of differential operator
+    */
+    
+    
+    
+    
+    template <size_t derivative_order = 0>
+    inline Vec<m> eval(const Vec<n>& x) const {
+        if constexpr (derivative_order == 0) {
+            return f(x);
+        } else if constexpr (n == 1) {
+            return df[derivative_order-1](x);
+        } else {
+            static_assert(derivative_order > 0 && n > 1, "eval<k> for k > 0 takes two arguments when n > 1");
+        }
+    }
+        
+    template <size_t derivative_order>
+    inline std::enable_if_t<(derivative_order > 0 && derivative_order < k), Vec<m>> 
+    eval(const Vec<n>& x, const Vec<n>& delta_x) const {
+        if constexpr (n == 1) {
+            return df[derivative_order-1](x) * delta_x;
+        } else {
+            return df[derivative_order-1](x, delta_x);
+        }
+    }
+    
+    // template <size_t derivative_order = 0, typename Container>
+    vector<Vec<m>> eval_series(vector<Vec<n>> data) {
+        vector<Vec<m>> result(data.size());
+        std::transform(data.begin(), data.end(), result.begin(), [this](const Vec<n>& x){return eval(x);});
+        return result;
+    }
+    
+    
+    
+};
 
-// template <size_t n>
-// class VecFuncC<n, 0> {
-//     VecFunc<n> f;
-    
-// public:
-//     VecFuncC(const VecFunc<n>& f) : f(f) {};
-    
-//     inline Vec<n> operator()(double t) {
-//         return f(t);
-//     }
-    
-//     // added for completeness only, here instead of func[0](t) you should use func(t)
-//     const VecFunc<n>& operator[](size_t i) { 
-//         if (i > 0) throw("Index is out of range in VecFuncC.");
-//         return f;
-//     };
-// };
 
-
-
-
-
-// template <size_t n, size_t k = 0>
-// class VecFuncC {
-//     array<VecFunc<n>, k+1> fs;
-    
-// public:
-//     VecFuncC(const array<VecFunc<n>, k+1>& fs) : fs(fs) {};
-    
-//     inline Vec<n> operator()(double t) {
-//         return fs[0](t);
-//     }
-    
-//     const VecFunc<n>& operator[](size_t i) {
-//         return fs[i];
-//     };
-// };
-
-// template <size_t n>
-// class VecFuncC<n, 0> {
-//     VecFunc<n> f;
-    
-// public:
-//     VecFuncC(const VecFunc<n>& f) : f(f) {};
-    
-//     inline Vec<n> operator()(double t) {
-//         return f(t);
-//     }
-    
-//     // added for completeness only, here instead of func[0](t) you should use func(t)
-//     const VecFunc<n>& operator[](size_t i) { 
-//         if (i > 0) throw("Index is out of range in VecFuncC.");
-//         return f;
-//     };
-// };
 
 
 
@@ -142,78 +116,8 @@ void VecCopy(double from, vector<double>& to, size_t i = 0) {
 
 
 /**
- * @class MyClass
- * @brief This is a simple class example.
- * 
- * MyClass is used to demonstrate how Doxygen processes class
- * documentation in C++.
+ * @brief Operator to print array in the format [1, 2, 3]
  */
-template <size_t n, size_t m, size_t k = 0>
-class VecMapC {
-    VecMap<n, m> f;
-    array<VecMap2<n,n,m>, k> df;
-    
-public:
-    
-    VecMapC () {};
-    
-    template <size_t ZERO = 0, typename = std::enable_if_t<k == 0 && ZERO == 0>>
-    VecMapC(const VecMap<n, m>& f) : f(f) {};
-    
-    VecMapC(const VecMap<n, m>& f, const array<VecMap2<n,n,m>, k>& df) : f(f), df(df) {};
-    
-    inline Vec<m> operator()(const Vec<n>& x) const {
-        return f(x);
-    }
-    
-    template <size_t derivative = 0, typename = std::enable_if_t<derivative == 0>>
-    inline Vec<m> eval(const Vec<n>& x) const {
-        return f(x);
-    }
-    
-    template <size_t derivative, typename = std::enable_if_t<(derivative > 0 && derivative < k)>>
-    inline Vec<m> eval(const Vec<n>& x, const Vec<n>& delta_x) const {
-        return df[derivative-1](x, delta_x);
-    }
-};
-
-
-template <size_t m, size_t k = 0>
-class VecFuncC {
-    VecMap<1, m> f;
-    array<VecMap<1, m>, k> df;
-    
-public:
-    
-    VecFuncC () {};
-    
-    template <size_t ZERO = 0, typename = std::enable_if_t<k == 0 && ZERO == 0>>
-    VecFuncC(const VecMap<1, m>& f) : f(f) {};
-    
-    VecFuncC(const VecMap<1, m>& f, const array<VecMap<1, m>, k>& df) : f(f), df(df) {};
-    
-    inline Vec<m> operator()(double x) {
-        return f(x);
-    }
-    
-    template <size_t derivative = 0>
-    inline std::enable_if_t<derivative == 0, Vec<m>> eval(double x) {
-        return f(x);
-    }
-    
-    template <size_t derivative = 0>
-    inline std::enable_if_t<(derivative > 0 && derivative < k), Vec<m>> eval(double x) {
-        return df[derivative-1](x);
-    }
-    
-};
-
-
-
-
-
-
-// print Array
 template <typename T, std::size_t N>
 std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr) {
     os << '[';
@@ -228,7 +132,9 @@ std::ostream& operator<<(std::ostream& os, const std::array<T, N>& arr) {
 }
 
 
-// Array + Array
+/**
+ * @brief Element-wise sum of two arrays of the same size.
+ */
 template <typename T, std::size_t N>
 std::array<T, N> operator+(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
     std::array<T, N> result;
@@ -238,7 +144,9 @@ std::array<T, N> operator+(const std::array<T, N>& lhs, const std::array<T, N>& 
     return result;
 }
 
-// Array - Array
+/**
+ * @brief Element-wise difference of two arrays of the same size.
+ */
 template <typename T, std::size_t N>
 std::array<T, N> operator-(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
     std::array<T, N> result;
@@ -248,7 +156,9 @@ std::array<T, N> operator-(const std::array<T, N>& lhs, const std::array<T, N>& 
     return result;
 }
 
-// Array * Scalar
+/**
+ * @brief Product of an array and scalar.
+ */
 template <typename T, std::size_t N>
 std::array<T, N> operator*(const std::array<T, N>& lhs, T rhs) {
     std::array<T, N> result;
@@ -257,16 +167,9 @@ std::array<T, N> operator*(const std::array<T, N>& lhs, T rhs) {
     }
     return result;
 }
-
-
-
-// Array / Scalar
-template <typename T, std::size_t N>
-std::array<T, N> operator/(const std::array<T, N>& lhs, T rhs) {
-    return lhs * (1/rhs);
-}
-
-// Array * Scalar
+/**
+ * @brief Product of a scalar and array.
+ */
 template <typename T, std::size_t N>
 std::array<T, N> operator*(T lhs, const std::array<T, N>& rhs) {
     std::array<T, N> result;
@@ -276,7 +179,20 @@ std::array<T, N> operator*(T lhs, const std::array<T, N>& rhs) {
     return result;
 }
 
-// dot product :: Array * Array
+
+/**
+ * @brief Divide an array by a scalar.
+ */
+template <typename T, std::size_t N>
+std::array<T, N> operator/(const std::array<T, N>& lhs, T rhs) {
+    return lhs * (1/rhs); // Is it more efficient to multiply by reciprocal that is calculated once, than perform a multiple divisions?
+}
+
+
+
+/**
+ * @brief Dot product of two arrays.
+ */
 template <typename T, std::size_t N>
 T operator*(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
     T result;
@@ -286,7 +202,11 @@ T operator*(const std::array<T, N>& lhs, const std::array<T, N>& rhs) {
     return result;
 }
 
-// dot product :: Vector * Vector
+/**
+ * @brief Generalized dot product, usefull to define Runge Kutta method.
+ @param[in] size Number of elements of each argument that are used to 
+ @see RK_TimeSeries::step_push
+ */
 template <typename ContainerL, typename ContainerR>
 decltype(ContainerL{}[0] * ContainerR{}[0]) dot(const ContainerL& lhs, const ContainerR& rhs, size_t size) {
     decltype(lhs[0] * rhs[0]) result{};
@@ -298,7 +218,9 @@ decltype(ContainerL{}[0] * ContainerR{}[0]) dot(const ContainerL& lhs, const Con
 
 
 
-
+/**
+ * @brief Concatenation of two arrays.
+ */
 template <typename T, std::size_t N, std::size_t M>
 std::array<T, N + M> concatenate(const std::array<T, N>& arr1, const std::array<T, M>& arr2) {
     std::array<T, N + M> result;
@@ -318,26 +240,56 @@ std::array<T, N + M> concatenate(const std::array<T, N>& arr1, const std::array<
 
 
 
+/**
+ * @brief std::copy extension to work with type alias Vec<n>
+ @see Vec
+ */
+void VecCopy(Real from, Real& to, size_t i = 0) {
+    to = from;
+}
+
+/**
+ * @brief std::copy extension to work with type alias Vec<n>
+ @see Vec
+ */
+template <size_t n, typename T>
+void VecCopy(T from, array<T, n>& to, size_t i = 0) {
+    to[i] = from;
+}
+
+/**
+ * @brief std::copy extension to work with type alias Vec<n>
+ @see Vec
+ */
+template <size_t n, size_t m, typename T>
+void VecCopy(const array<T, n>& from, array<T, m>& to, size_t i = 0) {
+    copy(from.begin(), from.end(), to.begin() + i);
+}
+
+/**
+ * @brief std::copy extension to work with type alias Vec<n>
+ @see Vec
+ */
+template <size_t n, typename T>
+void VecCopy(const array<T, n>& from, vector<T>& to, size_t i = 0) {
+    copy(from.begin(), from.end(), to.begin() + i);
+}
+
+/**
+ * @brief std::copy extension to work with type alias Vec<n>
+ @see Vec
+ */
+void VecCopy(Real from, vector<Real>& to, size_t i = 0) {
+    to[i] = from;
+}
 
 
-// template<bool is_constant>
-// class Delay;
 
-// template<>
-// class Delay<true> {
-//     double tau;
-//     Delay(double tau) : tau(tau) {};
-//     inline double operator()(double t) const {
-//         return tau;
-//     }
-// }
+template <size_t n, typename T>
+inline Real norm(const array<T, n>& v) {
+    return sqrt(v*v);
+}
 
-// template<>
-// class Delay<false> {
-//     function<double(double)> tau;
-//     Delay(function<double(double)> tau) : tau(tau) {};
-//     inline double operator()(double t) const {
-//         return tau(t);
-//     }
-// }
-// // HOW WOULD DiscoQue discontinuity propagation work???
+inline Real norm(Real v) {
+    return abs(v);
+}
