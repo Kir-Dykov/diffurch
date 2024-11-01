@@ -60,10 +60,12 @@ def get_binary(filename):
 # no .cpp extention in filename
 def run_cpp(script_name, params, compiler_params = {}, has_output=True, recalculate=True, recompile=True, flags = "-O3"):
     
+    script_name_o = script_name.replace("/","::")
+    
     params_str = shlex.quote(json.dumps(params))
     compiler_params_str =  ' '.join([f'-D{key}={shlex.quote(str(value))}' for key, value in compiler_params.items()])
 
-    output_filename     = script_name + " " + params_str
+    output_filename     = script_name_o + " " + params_str
     output_filename     = output_filename[:min(len(output_filename), 200)] # truncate by 200 characters
     output_filename_bin = f"{output_bin_path}/{output_filename}.bin"
     
@@ -73,15 +75,15 @@ def run_cpp(script_name, params, compiler_params = {}, has_output=True, recalcul
         if not os.path.isdir(output_bin_path):
             os.system(f"mkdir {output_bin_path}")
 
-        if recompile or not os.path.isfile(f"{cpp_compiled_path}/{script_name}.o"):
+        if recompile or not os.path.isfile(f"{cpp_compiled_path}/{script_name_o}.o"):
             if not os.path.isdir(cpp_compiled_path):
                 os.system(f"mkdir {cpp_compiled_path}")
 
-            cpp_compile_command = f"g++ -std=c++23 {flags} {compiler_params_str} -w {cpp_path}/{script_name}.cpp -o {cpp_compiled_path}/{script_name}.o"
+            cpp_compile_command = f"g++ -std=c++23 {flags} {compiler_params_str} -w {cpp_path}/{script_name}.cpp -o {cpp_compiled_path}/{script_name_o}.o"
             compile_status = os.system(cpp_compile_command)
             assert compile_status == 0, f"ERROR: compiler exited and returned {compile_status}"
         
-        os.system(f'{cpp_compiled_path}/{script_name}.o {params_str} {shlex.quote(output_filename)}')
+        os.system(f'{cpp_compiled_path}/{script_name_o}.o {params_str} {shlex.quote(output_filename)}')
     
     if has_output:
         return get_binary(output_filename_bin)

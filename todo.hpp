@@ -1,3 +1,58 @@
+
+/*
+Implement:
+
+    default.cpp
+        here the user can externally specify the name of return handler and initial condition source
+        usage: simple value, solution, dense solution, poincare sequence, etc
+    
+    batch of initial conditions -> array of dense output solutions (try this on double pendulum)
+    
+    1d:
+        bifurcation diagram of a poincare section
+    
+    2d:
+        period of a solution depending on parameters
+        
+    rk_test_vs_analytic
+
+    rk_test
+        here make it not dependent on the analytic solution
+*/
+
+
+
+// VARIABLE STEP SIZE!!!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // how it should be
 
 // Make solution
