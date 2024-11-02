@@ -44,29 +44,32 @@ struct ReturnDenseSolution{
 
 struct ReturnSolutionAt {
     vector<Real> ts;
-    ReturnSolutionAt(const vector<Real> ts_) ts(ts_) {};
+    ReturnSolutionAt(const vector<Real> ts_) : ts(ts_) {};
     
     template <size_t n, size_t phi_derivatives_n>
     auto Return(RK_TimeSeries<n, phi_derivatives_n>& TS) { 
         vector<Vec<n>> result(ts.size());
         std::transform(ts.begin(), ts.end(), result.begin(), [&TS](Real t){return TS.eval(t);});
-        return return;
+        return result;
     };
-}
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+template<bool non_delayed = true, size_t delays_n = 0, size_t neutral_delays_n = 0, size_t derivatives_n = 0>
+struct ReturnSolutionWithDelays {
+    using SpecType = ArgSpec<non_delayed, delays_n, neutral_delays_n, derivatives_n>;
+    
+    SpecType spec;
+    ReturnSolutionWithDelays(SpecType spec) : spec(spec) {};
+    
+    template <size_t n, size_t phi_derivatives_n>
+    auto Return(RK_TimeSeries<n, phi_derivatives_n>& TS) { 
+        cout << spec.delays[0](0) << endl;
+        cout << spec.delays[1](0) << endl;
+        vector<Vec<n*(non_delayed + delays_n + neutral_delays_n)>> result(TS.t_ts.size());
+        std::transform(TS.t_ts.begin(), TS.t_ts.end(), result.begin(), [&TS, this](Real t){return TS.eval_pack(t, spec);});
+        return make_tuple(TS.t_ts, result);
+    };
+};
 
 template <size_t n>
 struct ReturnIntersections {
@@ -83,7 +86,7 @@ struct ReturnIntersections {
         function<Real(Real)> func = [&TS, this](Real t){
             return section_func(TS.eval(t));
         };
-        vector<Real> ts = find_roots(func, TS.t_ts, b_levels);
+        vector<Real> ts = find_roots(func, TS.t_ts, levels);
         vector<Vec<n>> xs(ts.size());
         std::transform(ts.begin(), ts.end(), xs.begin(), [&TS](Real t){return TS.eval(t);});
         
@@ -109,7 +112,7 @@ struct ReturnPeriod {
         function<Real(Real)> func = [&TS, this](Real t){
             return section_func(TS.eval(t));
         };
-        vector<Real> ts = find_roots(func, TS.t_ts, b_levels);
+        vector<Real> ts = find_roots(func, TS.t_ts, levels);
         vector<Vec<n>> xs(ts.size());
         std::transform(ts.begin(), ts.end(), xs.begin(), [&TS](Real t){return TS.eval(t);});
         

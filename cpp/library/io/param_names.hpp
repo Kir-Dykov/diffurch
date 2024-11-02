@@ -2,9 +2,9 @@
 
 // tool for dde definition
 
-#include "string_consteval.hpp"
 #include "json_unpack.hpp" // for from_json function
-#include "macros.hpp"
+#include "../utils/string_consteval.hpp"
+#include "../utils/macros.hpp"
 
 
 

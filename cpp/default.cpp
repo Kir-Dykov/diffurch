@@ -17,6 +17,11 @@ using namespace std;
 #define ReturnSolution()
 #endif
 
+#ifndef AFTER
+#define AFTER
+#endif
+
+
 #define MEASURE_TIME_BEGIN  std::chrono::steady_clock::time_point measure_time_begin = std::chrono::steady_clock::now();
 #define MEASURE_TIME_END    std::chrono::steady_clock::time_point measure_time_end = chrono::steady_clock::now();
 #define MEASURE_TIME_PRINT  int seconds = chrono::duration_cast<chrono::seconds>(measure_time_end - measure_time_begin).count(); \
@@ -30,9 +35,9 @@ int main(int argc, char* argv[]) {
     json   JSON_PARAMS     = json::parse(argv[1]);
 	string output_filename = argv[2];
     
-    JSON_UNPACK(Real, t_finish, h);    
+    JSON_UNPACK(Real, integration_finish, integration_step);    
     auto de = from_json<EQ>(JSON_PARAMS);   
-    auto ret = de.solution(h, t_finish, INIT_FUNCTION, RETURN);
+    auto ret = de.solution(integration_step, integration_finish, INIT_FUNCTION, RETURN);
     
     string full_output_filename = "../output/bin/" + output_filename + ".bin";
     
@@ -43,6 +48,8 @@ int main(int argc, char* argv[]) {
     } else {
         save_arrays(full_output_filename, ret);
     }
+    
+    AFTER
     
     MEASURE_TIME_END;
     MEASURE_TIME_PRINT;

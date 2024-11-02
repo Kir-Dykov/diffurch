@@ -2,7 +2,8 @@
 
 #include <vector>
 #include "runge_kutta_tables.hpp"
-#include "vec.hpp"
+
+#include "../utils/vec.hpp"
 
 
 using namespace std;

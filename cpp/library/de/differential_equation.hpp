@@ -8,6 +8,8 @@
 #include "discoque.hpp"
 #include "runge_kutta_tables.hpp"
 #include "time_series.hpp"
+#include "return_handler.hpp"
+#include "return_handler_list.hpp"
 
 #include "../utils/vec.hpp"
 #include "../utils/math.hpp"

@@ -1,9 +1,6 @@
 #pragma once
 
-#pragma once
-
-#include "../library/differential_equation.hpp"
-#include "../library/vec.hpp"
+#include "../include.hpp"
 
 template <size_t n, size_t m>
 using DDE = DifferentialEquation<n, ArgSpec<true,  m, 0, 0>,  ArgSpec<false, 0, 0, 0>, 0>;

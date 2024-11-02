@@ -1,9 +1,7 @@
 #pragma once
 
-#pragma once
-
-#include "../library/differential_equation.hpp"
-#include "../library/vec.hpp"
+#include "../include.hpp"
+#include "dde.hpp"
 
 // template <size_t n, size_t m>
 // using DDE = DifferentialEquation<n, ArgSpec<true,  m, 0, 0>,  ArgSpec<false, 0, 0, 0>, 0>;
@@ -67,3 +65,29 @@ struct DDE_relay_1 : public DifferentialEquation<1, ArgSpec<true,  0, 0, 0>,  Ar
 
 
 
+
+
+struct ResurgentNeuron : public DDE<2, 2>
+{
+    PARAMS(ResurgentNeuron, alpha, beta, eta, xi, lambda, h);
+    
+    Real f_alpha(Real u) {
+        return alpha*(1.r - u)/(alpha+u);
+    }
+    
+    Real f_beta(Real u) {
+        return beta*(1.r - u)/(beta+u);
+    }
+    
+    Real g(Real u) {
+        return xi*(u-eta)/(u+xi);
+    }
+    
+    ResurgentNeuron() {
+        f[0] = VEC_LAMBDA((this), (x, y, x_1, y_1, x_h, y_h), (
+            f_alpha(exp(lambda*x_1)),
+            f_beta( exp(lambda*y_h)) + g(exp(lambda*x))
+        ));
+        f_spec = {{Delay(1.r), Delay(h)}, {}};
+    }
+};

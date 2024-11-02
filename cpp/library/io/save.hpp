@@ -110,10 +110,18 @@ void write_arrays(ofstream& file, const Array& array, Rest... rest) {
     write_arrays(file, rest...);
 }
 
-template <typename... Types>
-void save_arrays(string filename, tuple<Types...> arrays) {
-    save_arrays(filename, std::get<>(arrays)...)
-}
+// template <typename... Types>
+// void save_arrays(string filename, tuple<Types...> arrays) {
+//     save_arrays(filename, std::get<>(arrays)...)
+// }
+
+// template <typename... Types>
+// void save_arrays(string filename, tuple<Types...> arrays) {
+//     save_arrays(filename, std::get<>(arrays)...)
+// }
+// TODO: make save_arrays to accept variadic arguments --- several arrays
+// but also expand nested tuples
+// to do that I guess it is sufficient to write a function that flattens nested tuples
 
 template <typename... Types>
 void save_arrays(string filename, Types... arrays) {

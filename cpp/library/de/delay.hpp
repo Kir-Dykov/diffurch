@@ -7,6 +7,8 @@
 
 #include "../utils/real.hpp"
 
+using namespace std;
+
 struct Delay {
     std::function<Real(Real)> tau;
     std::function<std::vector<Real>(Real)> propagate;
@@ -19,7 +21,8 @@ struct Delay {
     template <typename Callable>
     Delay(const Callable& tau, const Callable& propagate) : tau(tau), propagate(propagate) {};
     
-    Delay(const Real& tau_) : tau([&tau_](Real){return tau_;}), propagate([&tau_](Real t){return std::vector<Real>{t + tau_};}) {};
+    Delay(const Real&& tau_) : tau([ tau_](Real){return tau_;}), propagate([ tau_](Real t){return std::vector<Real>{t + tau_};}) {}; // copy if rvalue
+    Delay(const Real&  tau_) : tau([&tau_](Real){return tau_;}), propagate([&tau_](Real t){return std::vector<Real>{t + tau_};}) {}; // reference if lvalue
     
     inline Real operator()(Real t) const {
         return tau(t);

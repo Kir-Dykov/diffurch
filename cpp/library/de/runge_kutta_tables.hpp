@@ -3,7 +3,7 @@
 // directly used in integration
 
 #include <vector>
-#include "polynomial.hpp"
+#include "../utils/polynomial.hpp"
 
 using namespace std;
 

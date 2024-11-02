@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include "../library/differential_equation.hpp"
-#include "../library/vec.hpp"
-#include "../library/macros.hpp"
-#include "../library/param_names.hpp"
+#include "../include.hpp"
+
 
 template <size_t n>
 using ODE = DifferentialEquation<n, ArgSpec<true,  0, 0, 0>,  ArgSpec<false, 0, 0, 0>, 0>;
