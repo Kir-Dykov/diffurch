@@ -2,6 +2,7 @@
 
 #include "de/differential_equation.hpp"
 #include "de/return_handler_list.hpp"
+#include "de/step_size_controller.hpp"
 
 #include "io/json_unpack.hpp"
 #include "io/json.hpp"

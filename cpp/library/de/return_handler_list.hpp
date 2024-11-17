@@ -20,6 +20,13 @@ struct ReturnSolution {
     };
 };
 
+struct ReturnSolutionAndError {
+    template <size_t n, size_t phi_derivatives_n>
+    static auto Return(RK_TimeSeries<n, phi_derivatives_n>& TS) { 
+        return make_tuple(TS.t_ts, TS.x_ts, TS.e_ts);
+    };
+};
+
 struct ReturnSolutionAndDerivative {
     template <size_t n, size_t phi_derivatives_n>
     static auto Return(RK_TimeSeries<n, phi_derivatives_n>& TS) { 

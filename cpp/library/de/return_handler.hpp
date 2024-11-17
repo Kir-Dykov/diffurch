@@ -2,6 +2,7 @@
 
 #include "time_series.hpp"
 
+
 template <typename T, typename Arg>
 concept has_Return = requires (T t, Arg arg) {
     t.Return(arg);

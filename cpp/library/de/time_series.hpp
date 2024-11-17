@@ -1,4 +1,4 @@
-#pragma once
+ #pragma once
 
 #include <vector>
 #include "runge_kutta_tables.hpp"
@@ -14,10 +14,13 @@ using namespace std;
 #endif
 
 
+
 template<size_t n, size_t phi_derivatives_n, 
-typename rk = RK>
+typename rk_ = RK>
 class RK_TimeSeries {
 public:
+
+    using rk = rk_;
 
     // inline static const RK< RK_method::RK4 > rk; // without `inline' rk is not initialized and linker cannot find it
     // inline static const RK<rk_method> rk; // without `inline' rk is not initialized and linker cannot find it
@@ -25,6 +28,7 @@ public:
     vector<Real> t_ts;
     vector<Vec<n>> x_ts;
     vector<array<Vec<n>, rk::s>> K_ts;
+    vector<Real> e_ts {0};
     
     VecMapC<1, n, phi_derivatives_n> phi;
     
@@ -112,13 +116,16 @@ public:
             
         }
         
-        Vec<n> Ksum = dot(rk::B, K, rk::s);
-
+        Vec<n> Ksum  = dot(rk::B, K, rk::s);
+        
         Vec<n> x = x_ts.back() + h*Ksum;
         
         t_ts.push_back(t);
         x_ts.push_back(x);
         K_ts.push_back(K);
+        
+        Vec<n> Ksum_ = dot(rk::B_hat, K, rk::s);
+        e_ts.push_back( h*norm(Ksum - Ksum_) );
     }
     
     
@@ -127,6 +134,7 @@ public:
         t_ts.pop_back();
         x_ts.pop_back();
         K_ts.pop_back();
+        e_ts.pop_back();
     }
 
         

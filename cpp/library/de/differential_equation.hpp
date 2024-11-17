@@ -10,6 +10,7 @@
 #include "time_series.hpp"
 #include "return_handler.hpp"
 #include "return_handler_list.hpp"
+#include "step_size_controller.hpp"
 
 #include "../utils/vec.hpp"
 #include "../utils/math.hpp"
@@ -43,13 +44,12 @@ public:
     vector<VecMapC<1,n>> analytic_solutions;
     // vector<VecMapC<1,n>> initial_conditions;
         
-    template <typename ReturnHandler, size_t phi_derivatives_n = 0>
-    auto solution(Real h, Real t_f, 
-                  VecMapC<1, n, phi_derivatives_n> phi, ReturnHandler return_handler = ReturnNone{}) {
+    template <typename ReturnHandler, typename StepSizeController, size_t phi_derivatives_n = 0>
+    auto solution(Real t_f, 
+                  VecMapC<1, n, phi_derivatives_n> phi, ReturnHandler return_handler, StepSizeController step_size_controller) {
     
         Real prev_t, t = 0;
         size_t f_i = 0;
-        
         
         DiscoQue<f_delays_n,          6> disco(                f_spec.delays); // Discontinuities Queue
         DiscoQue<f_neutral_delays_n, -1> disco_neutral(f_spec.neutral_delays); // Discontinuities Queue
@@ -74,7 +74,7 @@ public:
 
         while (t < t_f) {
             prev_t = t;
-            t = t + h;
+            t = prev_t + step_size_controller.step_size(TS);
 
             if (t >= t_f) { t = t_f; }
             
@@ -86,6 +86,12 @@ public:
             }
             
             TS.step_push(t, f[f_i], f_spec);
+            
+            while (step_size_controller.is_to_be_rejected(TS)) {
+                t = prev_t + step_size_controller.step_size(TS);
+                TS.pop_back();
+                TS.step_push(t, f[f_i], f_spec);
+            }
             
             if constexpr (b_levels_n > 0) { // Discontinuity detection
                 b_val_prev = b_val;

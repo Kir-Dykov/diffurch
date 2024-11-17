@@ -14,17 +14,12 @@
 using namespace std;
 
 #ifndef RETURN
-#define RETURN ReturnSolution()
-#endif
-
-#ifndef STEPSIZE_CONTROL
-#define STEPSIZE_CONTROL ConstantStepsize(JSON_PARAMS[\"integration_step\"])
+#define ReturnSolution()
 #endif
 
 #ifndef AFTER
 #define AFTER
 #endif
-
 
 #define MEASURE_TIME_BEGIN  std::chrono::steady_clock::time_point measure_time_begin = std::chrono::steady_clock::now();
 #define MEASURE_TIME_END    std::chrono::steady_clock::time_point measure_time_end = chrono::steady_clock::now();
@@ -39,9 +34,9 @@ int main(int argc, char* argv[]) {
     json   JSON_PARAMS     = json::parse(argv[1]);
 	string output_filename = argv[2];
     
-    JSON_UNPACK(Real, integration_finish);    
+    JSON_UNPACK(Real, integration_finish, integration_step);    
     auto de = from_json<EQ>(JSON_PARAMS);   
-    auto ret = de.solution(integration_finish, INIT_FUNCTION, RETURN, STEPSIZE_CONTROL);
+    auto ret = de.solution(integration_step, integration_finish, INIT_FUNCTION, RETURN);
     
     string full_output_filename = "../output/bin/" + output_filename + ".bin";
     
