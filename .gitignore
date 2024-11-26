@@ -1,9 +1,6 @@
 output/*
 cpp_compiled/*
 
-
-docs/*
-
 #py cache
 *.pyc
 
