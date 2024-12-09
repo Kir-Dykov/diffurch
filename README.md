@@ -72,16 +72,17 @@ oddesa.solve(equation,
              at = "all",
              return_derivatives = 0,
              return_delayed = None,
-             stepsize = "auto",
-             max_steps = 1e16,
+             stepsize = ("auto", dict(tol =1e-10, atol = None, rtol = None),
              max_stepsize = 1.,
-             tol =1e-10,
-             atol = None,
-             rtol = None,
+             max_steps = 0,
+             events = None,
+             disable_discontinuity_detection = True,
+             discontinuities = None
 )
+
 ```
-Parameters:
-* `equation : str`
+Parameters: 
+* `equation : str` 
   defines the system of differential equations by string in which:
   - equations are separated by `;` (semicolon)
   - each equation has the form `<variable>' = <rhs>`, 
@@ -142,8 +143,16 @@ Parameters:
     variable or its derivative is represented 
     by string `<variable>|<delay>`, `<variable>'|<delay>`, etc.
   note: the `return_derivatives` and `return_delayed` affect the output independently
-* `stepsize : "auto" | "at" | array | float`
-  - `"auto"` : use adaptive stepsize control, defined by the method ad parameters `tol`, `atol`, `rtol`, and `max_stepsize`
+* `stepsize : ("auto", dict) | "at" | array | float`
+  - `("auto", dict)` : use adaptive stepsize control, dict specifies the parameters `tol`, `atol`, `rtol`, and `max_stepsize`:
+    * `tol : float`
+      sets `atol = rtol = tol` parameters for adaptive stepsize control
+    * `atol : float`
+      maximal estimated absolute error allowed at each step when using adaptive stepsize control
+    * `rtol : float`
+      maximal estimated relative error allowed at each step when using adaptive stepsize control
+    * `max_stepsize : float`
+      maximal allowed stepsize when using adaptive stepsize control
   - `"at"` : use the values specified by `at` keyword, valid only if `at` were specified by int or an array
   - `array` : use the values in array for integration points, 
     the parameters `stepsize=np.linspace(0,20,100), at="all"` are 
@@ -153,14 +162,7 @@ Parameters:
   maximum number of steps the integrator is allowed to make, 
   if this number of steps is exceeded, `stop_integration` is 
   issued with a corresponding warning. Negative values or zero effectively disables this limitation.
-* `tol : float`
-  sets `atol = rtol = tol` parameters for adaptive stepsize control
-* `atol : float`
-  maximal estimated absolute error allowed at each step when using adaptive stepsize control
-* `rtol : float`
-  maximal estimated relative error allowed at each step when using adaptive stepsize control
-* `max_stepsize : float`
-  maximal allowed stepsize when using adaptive stepsize control
+
 * `discontinuities : str | tuple(str)`
   specifies the formulas when discontinuities may occur, str has the 
   form `"<lhs> = <rhs>"`, where `<lhs>` is formula containing variables and parameters,
@@ -169,3 +171,26 @@ Parameters:
   are handled automatically, for other cases use this option to include intersections with 
   discontinuity surfaces into integration mesh to avoid 
   order failure or excessive rejected steps in of numerical method.
+* `discontinuity_detection` : bool
+  default: true
+* `events : oddesa.event | tuple(oddesa.event)`
+* `method` : str
+  numerical method to use, including rk4, rk45, and actually good methods
+
+
+
+
+```python
+oddesa.event(event : str, 
+             condition : str or tuple(str),
+             save : str or tuple(str),
+             save_above : str or tuple(str),
+             save_below : str or tuple(str),
+             change : str or tuple(str),
+             change_above : str or tuple(str),
+             change_below : str or tuple(str),
+             action : "step_on", "stop_integration" or "disable_event"
+)
+```
+
+event could be string like "x = 0", or special like "step_rejected", "step"

@@ -1,0 +1,109 @@
+at = "all", return_derivatives = 0
+event("step", save="t; x; y; z; step_error;")
+
+at = "all", return_derivatives=1, return_delayed = "all"
+event("step", save="t; x; y; z; x'; y'; z'; x|1; y|1; z|1;")
+
+at = "last"
+event("stop_integration", save="t; x; y; z;")
+
+at = np.linspace(0,10,101)
+event("t = [arr]", arr = np.linspace(0,10,101), save="t; x; y; z;")
+
+
+event("x = [1,0,0,1,1,2,3]")
+
+
+solution returns tuple
+each element of a tuple corresponds to the output of each event, given by `save` specification
+
+maybe this tuple can be wrapped to provide additional retrivial syntax
+
+(data) = oddesa.solve(...)
+
+t, x, y, z, stepsize, error = data
+t, x, y, z = data[("t", "x", "y", "z")]
+
+plt.plot(t, x)
+plt.plot(t, y)
+plt.plot(t, z)
+plt.plot3d(x,y,z)
+
+
+
+
+event0 = oddesa.event("y' < 0", condition="x > 0", save="x; y; z;", alter="sigma += 0.1; y = y-x")
+
+event_bounce = oddesa.event("x < 0", save="t", alter="x' = -x';")
+
+event_delay_bounce = oddesa.event("x'|1 < 0", save="t", alter="x' = -x'; x = x + x|1;")
+
+
+
+
+events:
+    detection/location:
+        "x < 0" etc
+        "step"
+        "stop_integration"
+    filter:
+        "y' < 0" etc
+    save:
+        "t; x;"
+    change:
+        "x = -x; sigma += 1;"
+    
+    action:
+        "stop_integration"
+
+
+Sequence:
+    detection of "x = 0" etc happens after last successful step, 
+    it is supposed to be a simple check that only requires checking 
+    inequalities between last two steps, or delay terms evaluation at worst
+
+    location, using dense formula or, in absence, additional steps, we approximate
+    the `t` value at which the event occurs and reject the previous 
+    step to step onto that point. the only scenario that don't require 
+    rejecting is when we only saving values, 
+    and not changing anything nor stopping integration
+
+    filtering is happening after location and before potential step rejection
+
+    save before change
+
+    change
+
+    save after change
+
+    use action
+
+detection "step": detection always true and location is skipped, the current value t after successful step is used
+detection "stop_integration": same as "step" but after last step
+
+
+Data structure:
+    have to have a function for detection and location
+    it is defined similar to rhs, but outputs a scalar value
+    
+    where_to_save
+    
+    
+change:
+    
+    affects only the current state or discrete variables, or parameters
+    time cannot be changed
+    past cannot be changed
+    
+    
+save:
+    can save current time, discrete variables, current state variables, as well as 
+    delayed variables
+    
+    
+    
+
+to_save(double t, Vec<n>& XXX) {
+    auto& [x, y] = XXX;
+    auto x`|1 = state.eval<"x", "|1", 1>(t)
+}

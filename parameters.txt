@@ -1,0 +1,5 @@
+Policy is this. What is about to be varied or tried a multiple values of, should be a parameter.
+
+For compilation it is only necessary to know
+    equation
+    

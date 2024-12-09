@@ -1,4 +1,15 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
+from pybind11.setup_helpers import Pybind11Extension, build_ext
+
+
+# pybind11 stuff suggested by chatgpt
+ext_modules = [
+    Pybind11Extension(
+        "fibonacci",  # Module name
+        ["fibonacci.cpp"],  # Source file
+    ),
+]
+
 
 setup(
     name='oddesa',
@@ -14,6 +25,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    
+    # pybind11 stuff suggested by chatgpt
+    ext_modules=ext_modules,
+    cmdclass={"build_ext": build_ext},
+    zip_safe=False,
 
     python_requires='>=3.6',
 )

@@ -13,6 +13,13 @@ void printTypesAndValues(Args&&... args) {
     ((std::cout << typeid(args).name() << " = " << args << ";   "), ...);
 }
 
+
+template<typename... Args>
+void printType(Args&&... args) {
+    // Fold expression to print types and values
+    ((std::cout << typeid(args).name() << ";   "), ...);
+}
+
 template <auto f, typename... Args>
 auto verbose(Args&&... args) {
     cout << "call " << typeid(f).name() << " with args ";
