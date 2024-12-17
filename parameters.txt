@@ -2,4 +2,42 @@ Policy is this. What is about to be varied or tried a multiple values of, should
 
 For compilation it is only necessary to know
     equation
+    events : affect variables and saving
+    initial conditions
+    discrete variables
     
+Not needed:
+    values of parameters
+    integration bounds
+    
+    
+Can be implicitly set pre-compilation
+    events that handle saving 
+    
+    
+Can be implicitly parametrized:
+    initial conditions
+        constant initial conditions:
+            x,y,z -> initial_x, initial_y, initial_z parameters that can be set explicitly or by initial_conditions keyword
+        sin-cos initial conditions?
+    integration bounds
+        initial_time, final_time parameters, set explicitly or by interval=(..., ...)
+        
+        independent 
+        
+        
+        
+Equations is specified as it is.
+
+Initial conditions:
+    in pre-compilation specification, 
+    it is just one specification of 
+    formula that depends on parameters,
+    like
+        ic = "x = sin(k*t); x' = -k*cos(k*t);"
+        ic = "sin(k*t); -k*cos(k*t);"
+    
+    or, it can be completely omitted, in which case
+    the constant initial conditions are implied
+        ic = "x = x0; x' = x'0"
+    in this case, ic is specified at runtime by values of implicit parameters x0, etc

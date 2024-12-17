@@ -25,29 +25,60 @@ using namespace std;
 // }
 
 
-template <typename ReturnType>
-struct Event {
-    
-    function<bool()> detect;
-    function<bool()> locate;
-    function<void()> change;
-    function<ReturnType()> save;
-};
+template <size_t n, typename ReturnType>
+struct Event {};
 
-template <typename... Types>
-struct Event<tuple<Types...>> {
-    function<bool()> detect;
-    function<bool()> locate;
+template <size_t n, typename... Types>
+struct Event<n, tuple<Types...>> {
+    function<bool(double, const Vec<n>&)> detect;
+    function<bool(double, const Vec<n>&)> filter;
     function<void()> change;
-    function<tuple<Types...>()> what_to_save;
-    tuple<vector<Types>...>  container;
+    function<tuple<Types...>(double, const Vec<n>&)> what_to_save;
+    
+    using container_t = tuple<vector<Types>...>;
+    container_t container;
+    
     void save() {
         auto X = what_to_save();
         push_back(container, X);
     }
+    
+    Event(
+        optional<function<bool(double, const Vec<n>&)>> detect_ = nullopt,
+        optional<function<bool(double, const Vec<n>&)>> filter_ = nullopt,
+        optional<function<void()>> change_ = nullopt,
+        optional<function<tuple<Types...>(double, const Vec<n>&)>> what_to_save_ = nullopt    
+    ) {
+        if (detect_.has_value()) detect = detect_;
+        if (filter_.has_value()) filter = filter_;
+        if (change_.has_value()) change = change_;
+        if (what_to_save_.has_value()) what_to_save = what_to_save_;
+    }
 };
 
-
+template <size_t n>
+struct Event<n, void> {
+    function<bool(double, const Vec<n>&)> detect;
+    function<bool(double, const Vec<n>&)> filter;
+    function<void()> change;
+    function<void(double, const Vec<n>&)> what_to_save;
+    
+    using container_t = void;
+    
+    void save() {}
+    
+    Event(
+        optional<function<bool(double, const Vec<n>&)>> detect_ = nullopt,
+        optional<function<bool(double, const Vec<n>&)>> filter_ = nullopt,
+        optional<function<void()>> change_ = nullopt,
+        optional<function<void(double, const Vec<n>&)>> what_to_save_ = nullopt    
+    ) {
+        if (detect_.has_value()) detect = detect_;
+        if (filter_.has_value()) filter = filter_;
+        if (change_.has_value()) change = change_;
+        if (what_to_save_.has_value()) what_to_save = what_to_save_;
+    }
+};
 
 
 // FIRSTLY
@@ -64,11 +95,11 @@ struct IVP {
     
     function<Vec<n>(double, const Vec<n>&)> lhs;
     function<Vec<n>(double)> initial_condition; // initial value depends on the initial time
-    pair<double, double> integration_interval;
     
     double t; // current time
+    double prev_t; // previous time
     Vec<n> X; // current state
-    Vec<n> prev_X; // current state
+    Vec<n> prev_X; // prevouous state
     
     // Vec<m> Y; // descrete variables stae
     
@@ -78,18 +109,18 @@ struct IVP {
     tuple<> stop_integration_events = make_tuple();
     tuple<> conditional_events      = make_tuple();
         
-    auto solution() {
+    auto solution(double initial_time, double final_time) {
         
-        t = integration_interval.first; // current time
+        t = initial_time; // current time
         X = initial_condition(t); // current state
         
         auto& step_events             = static_cast<Derived*>(this)->step_events;
         auto& stop_integration_events = static_cast<Derived*>(this)->stop_integration_events;
         auto& conditional_events      = static_cast<Derived*>(this)->conditional_events;
         
-        while (t < integration_interval.second) {
+        while (t < final_time) {
             
-            double prev_t = t;
+            prev_t = t;
             t = prev_t + 0.001; // no stepsize controller yet
             
             double h = t - prev_t;
@@ -123,9 +154,13 @@ struct IVP {
 };
 
 
+// vector<Event<n>>
 
+// vector<vector<double>> Event<n>::container
 
-struct Lorenz : IVP<3, Lorenz> {
+// result = vector<vector<vector<double>>>
+
+struct Lorenz : IVP<3, Lorenz>, Event<[](){}, [](){}> {
     double sigma;
     double rho;
     double beta;
@@ -144,17 +179,52 @@ struct Lorenz : IVP<3, Lorenz> {
         
         initial_condition = [this](double t){return Vec<3>{1,2,3};};
         
-        integration_interval = make_pair(0., 0.1);
     }
+    
 
-    tuple<Event<tuple<double, double, double, double>>> step_events = make_tuple(
-        Event<tuple<double, double, double, double>> {
-            .what_to_save = [this]() -> tuple<double, double, double, double> {
+    // tuple<Event<tuple<double, double, double, double>>> step_events = make_tuple(
+    //     Event<tuple<double, double, double, double>> {
+    //         .what_to_save = [this](){
+    //             const auto& [x, y, z] = X;
+    //             return make_tuple(t, x, y, z);
+    //         }
+    //     }
+    // );
+    
+    Event(
+        [this](double t, Vec<n> X){
                 const auto& [x, y, z] = X;
                 return make_tuple(t, x, y, z);
-            }
         }
-    );
+    ).set_detect(
+        [this](double t, Vec<n> X){
+            const auto& [x, y, z] = X; 
+            return x > 0;
+        }
+    )
+        
+    // Event<n>().set_detect(...).set_change(...)
+        
+        
+            
+    // NON_STATIC_AUTO_DECLARATION(step_events, make_tuple(
+    //     Event(nullopt, 
+    //           nullopt, 
+    //           nullopt, 
+    //           [this](){
+    //             const auto& [x, y, z] = X;
+    //             return make_tuple(t, x, y, z);
+    //           })
+    //     )
+    // );
 };
 
         
+// tuple<Event<tuple<{", ".join(["double"]*(variable_n+1))}>>> step_events = make_tuple(
+//         Event<tuple<{", ".join(["double"]*(variable_n+1))}>> {{
+//             .what_to_save = [this]() {{
+//                 const auto& [{variable_list}] = X;
+//                 return make_tuple(t, {variable_list});
+//             }}
+//         }}
+//     );
