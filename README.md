@@ -1,4 +1,4 @@
-# oddesa (Ordinary and Delay Differential Equations Solver and Analyzer)
+# diffurch : Differential equation numerical research tool
 
 This is development project that aims to become python package and c++ library that implements efficient numerical methods for a variety of classes of differential equations, including:
 * ordinary differential equations
