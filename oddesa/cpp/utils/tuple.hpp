@@ -44,6 +44,40 @@ auto transform(const std::tuple<Types...>& tpl, Func&& func) {
 }
 
 
+
+template <typename Condition, typename Tuple>
+struct filter_types {}
+
+template <typename Condition>
+struct filter_types<Condition, tuple<>> {
+    using type = std::tuple<>;  // Return empty tuple
+}
+
+
+template <typename Condition, typename Head, typename... Tail>
+struct filter_types<Condition, tuple<Head, Tail...>> {
+private:
+    using tail_type = typename filter_types<Condition, Tail...>::type;
+
+public:
+    using type = std::conditional_t<
+        Condition::template value<Head>,  // If condition is satisfied
+            decltype(std::tuple_cat(std::tuple<Head>{}, tail_type)),  // Include Head
+            tail_type  // Skip Head
+    >;
+};
+
+// Helper alias for cleaner syntax
+template <typename Condition, typename... Ts>
+using filter_types = typename filter_types<Condition, Ts...>::type;
+
+template <typename Base>
+struct inherits {
+    template <typename T>
+    static constexpr bool value = std::is_base_of_v<Base, T>;
+};
+
+
 // template <typename T>
 // struct tuple_add_const_s {};
 
