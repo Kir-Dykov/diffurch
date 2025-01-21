@@ -1,3 +1,7 @@
+# Note
+
+This project is temporarely discontinued in favour of full-cpp realization diffurch-cpp (see https://github.com/Danila-Bain/diffurch-cpp). This project will be continued as diffurch-py with diffurch-cpp as a dependency, once diffurch-cpp reaches stable release.
+
 # diffurch : Differential equation numerical research tool
 
 This is development project that aims to become python package and c++ library that implements efficient numerical methods for a variety of classes of differential equations, including:
